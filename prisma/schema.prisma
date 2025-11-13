@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==============================
+// TABLE : Charges
+// ==============================
+model Charge {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  fournisseur String
+  quantite    Int
+  poids       Float
+  prix        Float
+  createdAt   DateTime @default(now())
+}
+
+// ==============================
+// TABLE : Dépenses (Expenses)
+// ==============================
+model Depense {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  categorie String
+  montant   Float
+  createdAt DateTime @default(now())
+}
+
+model Facture {
+  id                Int       @id @default(autoincrement())
+  numeroFacture     String    @unique @default("FAC-INIT")
+  date              DateTime  @default(now())
+  clientNom         String
+  clientTelephone   String
+  clientAdresse     String?
+  typeDeProduit     String
+  quantity          Int
+  price             Float
+  total             Float
+  modePaiement      String    @default("Espèces")
+  statut            String    @default("Payée")
+
+  // Infos entreprise (fixes)
+  entrepriseNom     String    @default("Scierie du Congo SARL")
+  entrepriseAdresse String    @default("Avenue Industrielle, Kinshasa, RDC")
+  entrepriseTelephone String  @default("+243 999 999 999")
+  entrepriseEmail   String?   @default("contact@scierieducongo.com")
+  entrepriseNIF     String?   @default("NIF A123456789")
+
+  createdAt         DateTime  @default(now())
+}
+
+
+
+// ==============================
+// TABLE : Productions
+// ==============================
+model Production {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  typeBois  String
+  quantity  Int
+  unitPrice Float
+  total     Float
+  createdAt DateTime @default(now())
+}
+
+// ==============================
+// TABLE : Ventes (Sales)
+model Stock {
+  id        Int      @id @default(autoincrement())
+  type      String
+  quantity  Float
+  unitPrice Float
+  total     Float
+  date      DateTime
+  createdAt DateTime @default(now())
+}
+
+model Vente {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  type      String
+  quantity  Float
+  unitPrice Float
+  total     Float
+  unite     String?
+  createdAt DateTime @default(now())
+}
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(EMPLOYEE)
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+

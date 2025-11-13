@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Vente" ALTER COLUMN "date" DROP DEFAULT;
