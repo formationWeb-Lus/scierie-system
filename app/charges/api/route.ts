@@ -1,7 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+
 
 // 🔹 Récupérer toutes les charges
 export async function GET() {
