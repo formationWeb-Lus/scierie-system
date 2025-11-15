@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
 import { prisma } from "@/lib/prisma";
-
 
 // ===============================
 // 🔹 GET — Récupérer toutes les factures
@@ -12,7 +9,6 @@ export async function GET() {
     const invoices = await prisma.facture.findMany({
       orderBy: { createdAt: "desc" },
     });
-
     return NextResponse.json(invoices);
   } catch (error) {
     console.error("❌ Erreur GET /factures/api:", error);
@@ -23,10 +19,9 @@ export async function GET() {
 // ===============================
 // 🔹 POST — Créer une nouvelle facture
 // ===============================
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-
+    const body = await req.json();
     const {
       clientNom,
       clientTelephone,
@@ -37,7 +32,6 @@ export async function POST(request: Request) {
       modePaiement,
     } = body;
 
-    // 🔺 Vérifier les champs requis
     if (!clientNom || !clientTelephone || !typeDeProduit || !quantity || !price) {
       return NextResponse.json(
         { error: "Tous les champs obligatoires doivent être remplis" },
@@ -45,12 +39,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // 🔹 Générer numéro facture unique
     const numeroFacture = "FAC-" + Date.now().toString().slice(-6);
-
     const total = Number(quantity) * Number(price);
 
-    // 🔹 Enregistrement MongoDB / Prisma
     const newInvoice = await prisma.facture.create({
       data: {
         numeroFacture,
@@ -72,6 +63,63 @@ export async function POST(request: Request) {
       { error: "Erreur lors de la création de la facture" },
       { status: 500 }
     );
+  }
+}
+
+// ===============================
+// 🔹 PUT — Modifier une facture existante
+// ===============================
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, clientNom, clientTelephone, clientAdresse, typeDeProduit, quantity, price, modePaiement } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "ID manquant pour modification" }, { status: 400 });
+    }
+
+    const total = Number(quantity) * Number(price);
+
+    const updatedInvoice = await prisma.facture.update({
+      where: { id: Number(id) },
+      data: {
+        clientNom,
+        clientTelephone,
+        clientAdresse: clientAdresse || "",
+        typeDeProduit,
+        quantity: Number(quantity),
+        price: Number(price),
+        total,
+        modePaiement: modePaiement || "Espèces",
+      },
+    });
+
+    return NextResponse.json(updatedInvoice);
+  } catch (error) {
+    console.error("❌ Erreur PUT /factures/api:", error);
+    return NextResponse.json({ error: "Erreur lors de la modification" }, { status: 500 });
+  }
+}
+
+// ===============================
+// 🔹 DELETE — Supprimer une facture
+// ===============================
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const idParam = searchParams.get("id");
+
+    if (!idParam) {
+      return NextResponse.json({ error: "ID manquant pour suppression" }, { status: 400 });
+    }
+
+    const id = Number(idParam);
+    await prisma.facture.delete({ where: { id } });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("❌ Erreur DELETE /factures/api:", error);
+    return NextResponse.json({ error: "Erreur lors de la suppression" }, { status: 500 });
   }
 }
 
