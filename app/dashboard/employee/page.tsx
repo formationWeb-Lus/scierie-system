@@ -10,11 +10,12 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { Menu, X } from "lucide-react"; // icônes pour menu
 
 export default function HomePage() {
   const [data, setData] = useState<any>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  // 🔹 Charger les données globales du tableau de bord
   useEffect(() => {
     fetch("/api/dashboard")
       .then((res) => res.json())
@@ -32,54 +33,122 @@ export default function HomePage() {
   const { resume, ventes, productions, stocks, depenses, charges } = data;
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 lg:p-8 space-y-6 sm:space-y-8 bg-gray-50 min-h-screen">
-      {/* Titre principal */}
-      <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 text-center sm:text-left">
-        📊 Tableau de Bord Général
-      </h1>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* 🔹 HEADER */}
+      <header className="bg-blue-800 text-white shadow-md sticky top-0 z-50">
+        <div className="flex justify-between items-center p-4">
+          {/* Bouton menu mobile */}
+          <button
+            className="lg:hidden p-2 rounded hover:bg-blue-700 transition"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
 
-      {/* 🔹 Cartes résumé */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-        <Card title="Valeur du Stock" value={resume.totalStock} color="blue" />
-        <Card title="Ventes totales" value={resume.totalVentes} color="green" />
-        <Card title="Dépenses totales" value={resume.totalDepenses} color="red" />
-        <Card title="Charges totales" value={resume.totalCharges} color="orange" />
-      </div>
+          {/* Titre */}
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-center w-full lg:w-auto">
+            🪵 Système de Gestion de Scierie – Tableau de Bord
+          </h1>
+        </div>
 
-      {/* 🔹 Graphiques */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-        <Graph title="Évolution des ventes" data={ventes} dataKey="total" />
-        <Graph title="Production récente" data={productions} dataKey="total" />
-      </div>
+        {/* 🔹 Menu horizontal */}
+        <nav
+          className={`bg-blue-700 lg:flex lg:justify-center lg:space-x-8 text-sm font-medium transition-all duration-300 overflow-hidden ${
+            menuOpen ? "max-h-64 py-2" : "max-h-0 lg:max-h-none"
+          }`}
+        >
+          <ul className="flex flex-col lg:flex-row lg:items-center text-center space-y-2 lg:space-y-0 lg:space-x-6">
+            <li>
+              <a href="/" className="block px-3 py-1 hover:text-yellow-300">
+                🏠 Accueil
+              </a>
+            </li>
+            <li>
+              <a href="/sales" className="block px-3 py-1 hover:text-yellow-300">
+                🛒 Ventes
+              </a>
+            </li>
+            <li>
+              <a href="/stock" className="block px-3 py-1 hover:text-yellow-300">
+                📦 Stock
+              </a>
+            </li>
+            <li>
+              <a href="/productions" className="block px-3 py-1 hover:text-yellow-300">
+                🪚 Productions
+              </a>
+            </li>
+            <li>
+              <a href="/depenses" className="block px-3 py-1 hover:text-yellow-300">
+                💸 Dépenses
+              </a>
+            </li>
+            <li>
+              <a href="/charges" className="block px-3 py-1 hover:text-yellow-300">
+                ⚙️ Charges
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </header>
 
-      {/* 🔹 Tableaux récents */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-        <RecentTable
-          title="📦 Derniers stocks"
-          data={stocks}
-          columns={["type", "quantity", "total"]}
-        />
-        <RecentTable
-          title="🪚 Dernières productions"
-          data={productions}
-          columns={["typeBois", "quantity", "total"]}
-        />
-        <RecentTable
-          title="💰 Dépenses récentes"
-          data={depenses}
-          columns={["categorie", "montant"]}
-        />
-        <RecentTable
-          title="🚛 Charges récentes"
-          data={charges}
-          columns={["fournisseur", "prix"]}
-        />
-      </div>
+      {/* 🔹 CONTENU PRINCIPAL */}
+      <main className="flex-grow p-3 sm:p-4 md:p-6 lg:p-8 space-y-6 sm:space-y-8">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 text-center sm:text-left">
+          📊 Tableau de Bord Général
+        </h2>
+
+        {/* Cartes résumé */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+          <Card title="Valeur du Stock" value={resume.totalStock} color="blue" />
+          <Card title="Ventes totales" value={resume.totalVentes} color="green" />
+          <Card title="Dépenses totales" value={resume.totalDepenses} color="red" />
+          <Card title="Charges totales" value={resume.totalCharges} color="orange" />
+        </div>
+
+        {/* Graphiques */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+          <Graph title="Évolution des ventes" data={ventes} dataKey="total" />
+          <Graph title="Production récente" data={productions} dataKey="total" />
+        </div>
+
+        {/* Tableaux récents */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+          <RecentTable
+            title="📦 Derniers stocks"
+            data={stocks}
+            columns={["type", "quantity", "total"]}
+          />
+          <RecentTable
+            title="🪚 Dernières productions"
+            data={productions}
+            columns={["typeBois", "quantity", "total"]}
+          />
+          <RecentTable
+            title="💰 Dépenses récentes"
+            data={depenses}
+            columns={["categorie", "montant"]}
+          />
+          <RecentTable
+            title="🚛 Charges récentes"
+            data={charges}
+            columns={["fournisseur", "prix"]}
+          />
+        </div>
+      </main>
+
+      {/* 🔹 FOOTER */}
+      <footer className="bg-blue-900 text-gray-200 py-4 text-center text-sm mt-6">
+        © {new Date().getFullYear()} ScieriePro – Gestion complète de scierie.
+        <br />
+        Développé avec ❤️ par l’équipe WebAcademy.
+      </footer>
     </div>
   );
 }
 
-// 🔹 Carte de résumé
+/* === COMPOSANTS === */
+
 function Card({
   title,
   value,
@@ -91,7 +160,7 @@ function Card({
 }) {
   return (
     <div
-      className={`bg-${color}-100 border-l-4 border-${color}-600 p-3 sm:p-4 rounded-lg sm:rounded-xl shadow hover:shadow-md transition-transform duration-200 hover:scale-[1.02]`}
+      className={`bg-${color}-100 border-l-4 border-${color}-600 p-3 sm:p-4 rounded-lg shadow hover:shadow-md transition-transform duration-200 hover:scale-[1.02]`}
     >
       <p className="text-xs sm:text-sm text-gray-600">{title}</p>
       <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mt-1">
@@ -105,7 +174,6 @@ function Card({
   );
 }
 
-// 🔹 Graphique linéaire
 function Graph({
   title,
   data,
@@ -116,8 +184,8 @@ function Graph({
   dataKey: string;
 }) {
   return (
-    <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl shadow overflow-hidden">
-      <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-3 sm:mb-4 text-gray-800">
+    <div className="bg-white p-3 sm:p-4 rounded-lg shadow overflow-hidden">
+      <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-3 text-gray-800">
         {title}
       </h3>
       <div className="w-full h-[220px] sm:h-[280px] md:h-[340px]">
@@ -149,7 +217,6 @@ function Graph({
   );
 }
 
-// 🔹 Tableau récapitulatif
 function RecentTable({
   title,
   data,
@@ -160,8 +227,8 @@ function RecentTable({
   columns: string[];
 }) {
   return (
-    <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl shadow overflow-x-auto">
-      <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-3 text-gray-800">
+    <div className="bg-white p-3 sm:p-4 rounded-lg shadow overflow-x-auto">
+      <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 text-gray-800">
         {title}
       </h3>
       <table className="min-w-full text-xs sm:text-sm text-left text-gray-700">
@@ -210,4 +277,3 @@ function RecentTable({
     </div>
   );
 }
-

@@ -35,6 +35,7 @@ export default function SalesPage() {
     unitPrice: "",
     unite: "",
   });
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const boisTypes = [
     "2x22 planche",
@@ -69,7 +70,7 @@ export default function SalesPage() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🔹 Ajouter une vente
+  // 🔹 Ajouter ou modifier une vente
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.type || !form.quantity || !form.unitPrice) {
@@ -78,26 +79,69 @@ export default function SalesPage() {
     }
 
     try {
+      const method = editingId ? "PUT" : "POST";
+      const body = editingId ? { ...form, id: editingId } : form;
+
       const res = await fetch("/sales/api", {
-        method: "POST",
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        alert("✅ Vente enregistrée avec succès !");
+        alert(editingId ? "✅ Vente modifiée !" : "✅ Vente enregistrée !");
         setForm({ type: "", quantity: "", unitPrice: "", unite: "" });
-        fetchsales(); // actualiser le tableau
+        setEditingId(null);
+        fetchsales();
       } else {
         alert(`❌ Erreur : ${data.error || "Impossible d'enregistrer la vente."}`);
       }
     } catch (err) {
-      console.error("Erreur POST vente:", err);
+      console.error("Erreur POST/PUT vente:", err);
       alert("Erreur réseau lors de l'enregistrement.");
     }
   };
+
+  // 🔹 Modifier une vente
+  const handleEdit = (vente: Vente) => {
+    setEditingId(vente.id);
+    setForm({
+      type: vente.type,
+      quantity: vente.quantity.toString(),
+      unitPrice: vente.unitPrice.toString(),
+      unite: vente.unite || "",
+    });
+
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  // 🔹 Supprimer une vente
+  const handleDelete = async (id: number) => {
+    if (!confirm("Voulez-vous vraiment supprimer cette vente ?")) return;
+
+    try {
+      const res = await fetch(`/sales/api?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("✅ Vente supprimée !");
+        fetchsales();
+      } else {
+        alert(`❌ Erreur : ${data.error || "Impossible de supprimer la vente."}`);
+      }
+    } catch (err) {
+      console.error("Erreur DELETE vente:", err);
+      alert("Erreur réseau lors de la suppression.");
+    }
+  };
+
+  // 🔹 Fonction pour formater en francs congolais
+  const formatCDF = (value: number) =>
+    value.toLocaleString("fr-FR", { style: "currency", currency: "CDF", minimumFractionDigits: 0 });
 
   const totalGeneral = ventes.reduce((acc, v) => acc + (v.total || 0), 0);
 
@@ -120,7 +164,6 @@ export default function SalesPage() {
           </div>
         </div>
 
-        {/* menu horizontal (grand écran) */}
         <nav className="hidden lg:flex lg:items-center lg:space-x-6 text-sm">
           <Link href="/" className="text-white/90 hover:text-white">Accueil</Link>
           <Link href="/sales" className="text-white/90 hover:text-white">Ventes</Link>
@@ -131,7 +174,7 @@ export default function SalesPage() {
       </header>
 
       <div className="flex flex-1">
-        {/* SIDEBAR (visible sur grand écran) */}
+        {/* SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-64 bg-blue-900 text-gray-100 py-6 space-y-2 shadow-lg">
           <div className="px-4 mb-4">
             <div className="text-2xl font-bold">🪵 Scierie</div>
@@ -141,7 +184,7 @@ export default function SalesPage() {
           <nav className="flex-1 px-2 space-y-1">
             <MenuLink href="/" icon={<Home size={16} />} text="Accueil" />
             <MenuLink href="/charges" icon={<Settings size={16} />} text="Charges" />
-            <MobileMenuLink href="/stock" icon={<Package size={18} />} text="Stock" />
+            <MenuLink href="/stock" icon={<Package size={18} />} text="Stock" />
             <MenuLink href="/productions" icon={<Factory size={16} />} text="Production" />
             <MenuLink href="/sales" icon={<ShoppingCart size={16} />} text="Ventes" />
             <MenuLink href="/expenses" icon={<DollarSign size={16} />} text="Dépenses" /> 
@@ -167,13 +210,14 @@ export default function SalesPage() {
             onSubmit={handleSubmit}
             className="bg-white p-6 rounded-lg shadow-md grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"
           >
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium mb-1">Type de bois</label>
               <select
                 name="type"
                 value={form.type}
                 onChange={handleChange}
-                className="w-full border rounded-lg px-3 py-2"
+                className="w-full border rounded-lg px-3 py-2 appearance-none z-10 relative"
+                style={{ maxWidth: '100%' }}
               >
                 <option value="">-- Sélectionner --</option>
                 {boisTypes.map((type) => (
@@ -197,24 +241,33 @@ export default function SalesPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Prix unitaire ($)</label>
+              <label className="block text-sm font-medium mb-1">Prix unitaire (CDF)</label>
               <input
                 type="number"
                 name="unitPrice"
                 value={form.unitPrice}
                 onChange={handleChange}
-                placeholder="Ex: 120"
+                placeholder="Ex: 120000"
                 className="w-full border rounded-lg px-3 py-2"
               />
             </div>
 
-            <div className="flex items-end">
+            <div className="flex flex-col gap-2 items-end">
               <button
                 type="submit"
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg w-full"
               >
-                💾 Enregistrer la vente
+                {editingId ? "✏️ Modifier la vente" : "💾 Enregistrer la vente"}
               </button>
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={() => { setForm({ type: "", quantity: "", unitPrice: "", unite: "" }); setEditingId(null); }}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg w-full"
+                >
+                  ❌ Annuler
+                </button>
+              )}
             </div>
           </form>
 
@@ -225,15 +278,16 @@ export default function SalesPage() {
                 <tr>
                   <th className="px-6 py-3">Type</th>
                   <th className="px-6 py-3">Quantité</th>
-                  <th className="px-6 py-3">Prix unitaire ($)</th>
-                  <th className="px-6 py-3">Total ($)</th>
+                  <th className="px-6 py-3">Prix unitaire</th>
+                  <th className="px-6 py-3">Total</th>
                   <th className="px-6 py-3">Date</th>
+                  <th className="px-6 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {ventes.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-4 text-gray-400">
+                    <td colSpan={6} className="text-center py-4 text-gray-400">
                       Aucune vente enregistrée.
                     </td>
                   </tr>
@@ -242,11 +296,23 @@ export default function SalesPage() {
                     <tr key={v.id} className="border-b hover:bg-green-50 transition">
                       <td className="px-6 py-4">{v.type}</td>
                       <td className="px-6 py-4">{v.quantity}</td>
-                      <td className="px-6 py-4">${v.unitPrice.toLocaleString()}</td>
-                      <td className="px-6 py-4 font-semibold text-gray-900">
-                        ${v.total.toLocaleString()}
-                      </td>
+                      <td className="px-6 py-4">{formatCDF(v.unitPrice)}</td>
+                      <td className="px-6 py-4 font-semibold text-gray-900">{formatCDF(v.total)}</td>
                       <td className="px-6 py-4">{new Date(v.date).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 flex gap-2">
+                        <button
+                          onClick={() => handleEdit(v)}
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Modifier
+                        </button>
+                        <button
+                          onClick={() => handleDelete(v.id)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Supprimer
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -258,8 +324,9 @@ export default function SalesPage() {
                       Total des ventes :
                     </td>
                     <td className="px-6 py-3 text-green-700">
-                      ${totalGeneral.toLocaleString()}
+                      {formatCDF(totalGeneral)}
                     </td>
+                    <td></td>
                     <td></td>
                   </tr>
                 </tfoot>
@@ -274,7 +341,7 @@ export default function SalesPage() {
         © {new Date().getFullYear()} ScieriePro — Tous droits réservés.
       </footer>
 
-      {/* 🔹 MENU MOBILE (slide-in) */}
+      {/* 🔹 MENU MOBILE */}
       {menuOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-40 z-40 lg:hidden"
@@ -308,7 +375,6 @@ export default function SalesPage() {
   );
 }
 
-/* 🔸 MenuLink (desktop) */
 function MenuLink({ href, icon, text }: { href: string; icon: React.ReactNode; text: string }) {
   return (
     <Link href={href} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-blue-800 transition text-sm">
@@ -318,7 +384,6 @@ function MenuLink({ href, icon, text }: { href: string; icon: React.ReactNode; t
   );
 }
 
-/* 🔸 MobileMenuLink (mobile) */
 function MobileMenuLink({ href, icon, text, onClick }: { href: string; icon: React.ReactNode; text: string; onClick?: () => void }) {
   return (
     <Link href={href} onClick={onClick} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-blue-800 transition text-sm">

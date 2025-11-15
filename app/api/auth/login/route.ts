@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+
 const SECRET = process.env.JWT_SECRET || "secret123";
 
 export async function POST(req: Request) {

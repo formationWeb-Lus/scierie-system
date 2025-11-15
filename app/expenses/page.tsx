@@ -13,6 +13,7 @@ interface Expense {
 export default function ExpensePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [form, setForm] = useState({
+    id: 0,
     date: "",
     categorie: "",
     otherCategorie: "",
@@ -25,7 +26,7 @@ export default function ExpensePage() {
     try {
       const res = await fetch("/expenses/api");
       const data = await res.json();
-      setExpenses(data);
+      setExpenses(Array.isArray(data) ? data : []);
     } catch {
       setExpenses([]);
     }
@@ -42,9 +43,7 @@ export default function ExpensePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const categorieFinale =
-      form.categorie === "Autre" ? form.otherCategorie : form.categorie;
+    const categorieFinale = form.categorie === "Autre" ? form.otherCategorie : form.categorie;
 
     if (!form.date || !categorieFinale || !form.montant) {
       alert("Veuillez remplir tous les champs !");
@@ -53,17 +52,19 @@ export default function ExpensePage() {
 
     setLoading(true);
     try {
-      await fetch("/expenses/api", {
-        method: "POST",
+      const method = form.id ? "PUT" : "POST";
+      await fetch("/expenses/api" + (form.id ? "" : ""), {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: form.id || undefined,
           date: form.date,
           categorie: categorieFinale,
           montant: parseFloat(form.montant),
         }),
       });
 
-      setForm({ date: "", categorie: "", otherCategorie: "", montant: "" });
+      setForm({ id: 0, date: "", categorie: "", otherCategorie: "", montant: "" });
       fetchExpenses();
     } catch {
       alert("Erreur lors de l’enregistrement !");
@@ -72,146 +73,145 @@ export default function ExpensePage() {
     }
   };
 
+  const handleEdit = (exp: Expense) => {
+    setForm({
+      id: exp.id,
+      date: exp.date,
+      categorie: exp.categorie,
+      otherCategorie: "",
+      montant: exp.montant.toString(),
+    });
+    setMenuOpen(false);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Supprimer cette dépense ?")) return;
+    try {
+      await fetch(`/expenses/api?id=${id}`, { method: "DELETE" });
+      fetchExpenses();
+    } catch {
+      alert("Erreur lors de la suppression !");
+    }
+  };
+
   const totalGeneral = expenses.reduce((acc, exp) => acc + exp.montant, 0);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* ✅ Menu latéral */}
+      {/* SIDEBAR */}
       <aside
-        className={`fixed lg:static top-0 left-0 h-full bg-blue-800 text-white w-64 transform ${
+        className={`fixed lg:static top-0 left-0 h-full bg-blue-800 text-white w-56 transform ${
           menuOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0 transition-transform duration-300 z-50`}
       >
-        <div className="p-4 text-2xl font-bold border-b border-blue-600">
+        <div className="p-4 text-xl font-bold border-b border-blue-700 flex justify-between items-center">
           🪵 Scierie
+          <button className="lg:hidden p-1 rounded hover:bg-blue-700" onClick={() => setMenuOpen(false)}>
+            <X size={20} />
+          </button>
         </div>
+
         <nav className="flex flex-col p-4 space-y-2 text-sm">
-          <a href="/dashboard" className="hover:bg-blue-700 px-3 py-2 rounded">📊 Tableau de bord</a>
+          <a href="/dashboard" className="hover:bg-blue-700 px-3 py-2 rounded">📊 Dashboard</a>
           <a href="/charges" className="hover:bg-blue-700 px-3 py-2 rounded">💰 Charges</a>
           <a href="/expenses" className="bg-blue-700 px-3 py-2 rounded">💸 Dépenses</a>
           <a href="/invoices" className="hover:bg-blue-700 px-3 py-2 rounded">🧾 Factures</a>
-          <a href="/productions" className="hover:bg-blue-700 px-3 py-2 rounded">🪚 Productions</a>
+          <a href="/productions" className="hover:bg-blue-700 px-3 py-2 rounded">🪚 Prod.</a>
           <a href="/sales" className="hover:bg-blue-700 px-3 py-2 rounded">🛒 Ventes</a>
           <a href="/stock" className="hover:bg-blue-700 px-3 py-2 rounded">📦 Stock</a>
-          <a href="/reports" className="hover:bg-blue-700 px-3 py-2 rounded">📈 Rapports</a>
-          <a href="/parametres" className="hover:bg-blue-700 px-3 py-2 rounded">⚙️ Paramètres</a>
-          <a href="/utilisateurs" className="hover:bg-blue-700 px-3 py-2 rounded">👤 Utilisateurs</a>
+          <a href="/reports" className="hover:bg-blue-700 px-3 py-2 rounded">📊 Rapports</a>
+          <a href="/settings" className="hover:bg-blue-700 px-3 py-2 rounded">⚙️ Param.</a>
+          <a href="/users" className="hover:bg-blue-700 px-3 py-2 rounded">👤 Users</a>
         </nav>
+
+        <div className="mt-auto px-4 py-4 text-xs text-blue-200 border-t border-blue-700">
+          © {new Date().getFullYear()} ScieriePro
+        </div>
       </aside>
 
-      {/* ✅ Contenu principal */}
+      {/* CONTENU */}
       <div className="flex-1 flex flex-col">
-        {/* ✅ En-tête */}
-        <header className="bg-blue-700 text-white flex items-center justify-between px-4 py-3 lg:py-4">
-          <div className="flex items-center space-x-2">
-            <button
-              className="lg:hidden"
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Menu"
-            >
-              {menuOpen ? <X size={24} /> : <Menu size={24} />}
+        <header className="bg-blue-800 text-white flex items-center justify-between px-4 py-3 sticky top-0 z-40 shadow">
+          <div className="flex items-center gap-3">
+            <button className="lg:hidden p-2 rounded hover:bg-blue-700" onClick={() => setMenuOpen(!menuOpen)}>
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
-            <h1 className="text-lg font-semibold">💼 Gestion des Dépenses</h1>
+            <div>
+              <div className="text-lg font-bold">🪵 ScieriePro</div>
+              <div className="text-sm text-blue-200">Gestion Dépenses</div>
+            </div>
           </div>
 
-          {/* Menu horizontal (desktop) */}
-          <nav className="hidden lg:flex space-x-6 text-sm">
-            <a href="/dashboard" className="hover:underline">Accueil</a>
-            <a href="/reports" className="hover:underline">Rapports</a>
-            <a href="/parametres" className="hover:underline">Paramètres</a>
+          <nav className="hidden lg:flex gap-4 text-sm text-white/90">
+            <a href="/dashboard" className="hover:text-white">Accueil</a>
+            <a href="/reports" className="hover:text-white">Rapports</a>
+            <a href="/settings" className="hover:text-white">Paramètres</a>
+            <a href="/users" className="hover:text-white">Utilisateurs</a>
           </nav>
         </header>
 
-        {/* ✅ Contenu */}
-        <main className="flex-1 p-4 sm:p-6">
-          {/* Formulaire */}
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white p-4 rounded-lg shadow-md grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6"
-          >
-            <input
-              type="date"
-              name="date"
-              value={form.date}
-              onChange={handleChange}
-              className="border rounded px-3 py-2 text-sm"
-            />
-            <select
-              name="categorie"
-              value={form.categorie}
-              onChange={handleChange}
-              className="border rounded px-3 py-2 text-sm"
-            >
+        {/* MAIN */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          <h1 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-gray-800">💼 Dépenses</h1>
+
+          {/* FORM */}
+          <form onSubmit={handleSubmit} className="bg-white p-4 sm:p-6 rounded-lg shadow-md grid grid-cols-1 md:grid-cols-6 gap-3 mb-4 sm:mb-6">
+            <input type="date" name="date" value={form.date} onChange={handleChange} className="border rounded px-2 py-1 w-full text-sm" />
+            <select name="categorie" value={form.categorie} onChange={handleChange} className="border rounded px-2 py-1 w-full text-sm">
               <option value="">-- Catégorie --</option>
-              <option value="Carburant">Carburant</option>
+              <option value="Carburant">Carburant.</option>
               <option value="Maintenance">Maintenance</option>
               <option value="Salaire">Salaire</option>
               <option value="Transport">Transport</option>
               <option value="Autre">Autre</option>
             </select>
             {form.categorie === "Autre" && (
-              <input
-                type="text"
-                name="otherCategorie"
-                value={form.otherCategorie}
-                onChange={handleChange}
-                placeholder="Autre catégorie"
-                className="border rounded px-3 py-2 text-sm col-span-1 sm:col-span-2"
-              />
+              <input type="text" name="otherCategorie" value={form.otherCategorie} onChange={handleChange} placeholder="Autre" className="border rounded px-2 py-1 w-full md:col-span-2 text-sm" />
             )}
-            <input
-              type="number"
-              name="montant"
-              value={form.montant}
-              onChange={handleChange}
-              placeholder="Montant ($)"
-              className="border rounded px-3 py-2 text-sm"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-            >
-              {loading ? "Enregistrement..." : "💾 Ajouter"}
+            <input type="number" name="montant" value={form.montant} onChange={handleChange} placeholder="Montant FC" className="border rounded px-2 py-1 w-full text-sm" />
+            <button type="submit" disabled={loading} className="bg-blue-700 hover:bg-blue-800 text-white rounded px-3 py-1 font-medium w-full text-sm">
+              {loading ? "..." : form.id ? "✏️ Modifier" : "💾 Ajouter"}
             </button>
           </form>
 
-          {/* Tableau */}
-          <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-            <table className="min-w-full text-xs sm:text-sm text-left text-gray-600">
-              <thead className="bg-blue-600 text-white uppercase">
+          {/* TABLE */}
+          <div className="overflow-x-auto bg-white shadow rounded-lg">
+            <table className="min-w-full text-sm text-left text-gray-700">
+              <thead className="bg-blue-600 text-white uppercase text-xs sm:text-sm">
                 <tr>
-                  <th className="px-4 py-2">Date</th>
-                  <th className="px-4 py-2">Catégorie</th>
-                  <th className="px-4 py-2 text-right">Montant ($)</th>
+                  <th className="px-3 py-2">Date</th>
+                  <th className="px-3 py-2">Cat.</th>
+                  <th className="px-3 py-2 text-right">Montant</th>
+                  <th className="px-3 py-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {expenses.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="text-center py-3 text-gray-400">
-                      Aucune dépense enregistrée.
+                    <td colSpan={4} className="text-center py-4 text-gray-400 text-xs sm:text-sm">
+                      Aucune dépense.
                     </td>
                   </tr>
                 ) : (
                   expenses.map((exp) => (
                     <tr key={exp.id} className="border-b hover:bg-blue-50">
-                      <td className="px-4 py-2">{new Date(exp.date).toLocaleDateString()}</td>
-                      <td className="px-4 py-2">{exp.categorie}</td>
-                      <td className="px-4 py-2 text-right font-semibold">${exp.montant.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-xs sm:text-sm">{new Date(exp.date).toLocaleDateString("fr-FR")}</td>
+                      <td className="px-3 py-2 text-xs sm:text-sm">{exp.categorie}</td>
+                      <td className="px-3 py-2 text-right text-xs sm:text-sm font-semibold">{exp.montant.toLocaleString("fr-FR")} FC</td>
+                      <td className="px-3 py-2 flex gap-1 sm:gap-2">
+                        <button onClick={() => handleEdit(exp)} className="px-2 py-1 bg-yellow-500 text-white rounded text-xs sm:text-sm">✏️</button>
+                        <button onClick={() => handleDelete(exp.id)} className="px-2 py-1 bg-red-600 text-white rounded text-xs sm:text-sm">🗑️</button>
+                      </td>
                     </tr>
                   ))
                 )}
               </tbody>
               {expenses.length > 0 && (
-                <tfoot className="bg-gray-100 font-semibold">
+                <tfoot className="bg-gray-100 font-semibold text-xs sm:text-sm">
                   <tr>
-                    <td colSpan={2} className="text-right px-4 py-2">
-                      Total :
-                    </td>
-                    <td className="px-4 py-2 text-green-700 text-right">
-                      ${totalGeneral.toLocaleString()}
-                    </td>
+                    <td colSpan={2} className="text-right px-3 py-2">Total :</td>
+                    <td className="px-3 py-2 text-blue-700 text-right">{totalGeneral.toLocaleString("fr-FR")} FC</td>
+                    <td></td>
                   </tr>
                 </tfoot>
               )}
@@ -219,9 +219,8 @@ export default function ExpensePage() {
           </div>
         </main>
 
-        {/* ✅ Pied de page */}
-        <footer className="bg-blue-700 text-white text-center py-3 text-sm">
-          © {new Date().getFullYear()} Scierie - Tous droits réservés.
+        <footer className="bg-blue-800 text-white text-center py-2 text-xs sm:text-sm mt-auto shadow-inner">
+          © {new Date().getFullYear()} ScieriePro
         </footer>
       </div>
     </div>

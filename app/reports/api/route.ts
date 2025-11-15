@@ -12,7 +12,8 @@ import {
   subWeeks,
 } from "date-fns";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+
 
 export async function GET(req: Request) {
   try {
