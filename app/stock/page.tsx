@@ -171,114 +171,99 @@ export default function StockPage() {
         <main className="flex-1 p-4 sm:p-4 lg:p-8 overflow-y-auto">
           <h1 className="text-2xl sm:text-xl font-semibold mb-6 text-gray-800 truncate">📦 Gestion du Stock</h1>
 
-          {/* FORMULAIRE */}
+          {/* FORMULAIRE MOBILE-FRIENDLY */}
           <form
             onSubmit={handleSubmit}
-            className="bg-white p-4 sm:p-4 rounded-lg shadow-md grid grid-cols-1 sm:grid-cols-1 md:grid-cols-5 gap-3 mb-6"
+            className="bg-white p-4 rounded-lg shadow-md flex flex-col gap-3 mb-6 max-w-xs mx-auto"
           >
-            {/* Type de bois */}
-            <div className="w-full">
-              <label className="block text-sm sm:text-xs font-medium mb-1 truncate">Type de bois</label>
-              <select
-                name="type"
-                value={form.type}
-                onChange={handleChange}
-                className="w-full border rounded-lg px-2 py-2 text-sm sm:text-xs max-w-full truncate"
-              >
-                <option value="">-- Sélectionner --</option>
-                {boisTypes.map((type) => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
+            <label className="block text-sm font-medium">Type de bois</label>
+            <select
+              name="type"
+              value={form.type}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-2 py-2 text-sm"
+            >
+              <option value="">-- Sélectionner --</option>
+              {boisTypes.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
 
-            {/* Quantité */}
-            <div className="w-full">
-              <label className="block text-sm sm:text-xs font-medium mb-1 truncate">Quantité</label>
-              <input
-                type="number"
-                name="quantity"
-                value={form.quantity}
-                onChange={handleChange}
-                className="w-full border rounded-lg px-2 py-2 text-sm sm:text-xs max-w-full"
-                placeholder="Ex: 50"
-              />
-            </div>
+            <label className="block text-sm font-medium">Quantité</label>
+            <input
+              type="number"
+              name="quantity"
+              value={form.quantity}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-2 py-2 text-sm"
+              placeholder="Ex: 50"
+            />
 
-            {/* Prix unitaire */}
-            <div className="w-full">
-              <label className="block text-sm sm:text-xs font-medium mb-1 truncate">Prix unitaire (CDF)</label>
-              <input
-                type="number"
-                name="unitPrice"
-                value={form.unitPrice}
-                onChange={handleChange}
-                className="w-full border rounded-lg px-2 py-2 text-sm sm:text-xs max-w-full"
-                placeholder="Ex: 120"
-              />
-            </div>
+            <label className="block text-sm font-medium">Prix unitaire (CDF)</label>
+            <input
+              type="number"
+              name="unitPrice"
+              value={form.unitPrice}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-2 py-2 text-sm"
+              placeholder="Ex: 120"
+            />
 
-            {/* Total */}
-            <div className="w-full">
-              <label className="block text-sm sm:text-xs font-medium mb-1 truncate">Total (CDF)</label>
-              <input
-                type="text"
-                name="total"
-                value={formatCDF(form.total)}
-                disabled
-                className="w-full border rounded-lg px-2 py-2 bg-gray-100 text-sm sm:text-xs max-w-full"
-              />
-            </div>
+            <label className="block text-sm font-medium">Total (CDF)</label>
+            <input
+              type="text"
+              name="total"
+              value={formatCDF(form.total)}
+              disabled
+              className="w-full border rounded-lg px-2 py-2 bg-gray-100 text-sm"
+            />
 
-            {/* Bouton */}
-            <div className="flex items-end w-full">
-              <button
-                type="submit"
-                className="bg-blue-700 hover:bg-blue-800 text-white px-3 py-2 rounded-lg w-full text-sm sm:text-xs"
-              >
-                {editingId ? "✏️ Modifier" : "➕ Ajouter"}
-              </button>
-            </div>
+            <button
+              type="submit"
+              className="bg-blue-700 hover:bg-blue-800 text-white px-3 py-2 rounded-lg w-full text-sm"
+            >
+              {editingId ? "✏️ Modifier" : "➕ Ajouter"}
+            </button>
           </form>
 
-          {/* TABLEAU */}
+          {/* TABLEAU SCROLLABLE */}
           <div className="overflow-x-auto bg-white shadow-md rounded-lg">
             <table className="min-w-full text-sm text-left text-gray-600">
-              <thead className="bg-blue-600 text-white uppercase text-xs sm:text-[10px]">
+              <thead className="bg-blue-600 text-white uppercase text-xs">
                 <tr>
-                  <th className="px-3 py-2 truncate">Type de bois</th>
-                  <th className="px-3 py-2 truncate">Quantité</th>
-                  <th className="px-3 py-2 truncate">Prix unitaire (CDF)</th>
-                  <th className="px-3 py-2 truncate">Total (CDF)</th>
-                  <th className="px-3 py-2 truncate">Dernière mise à jour</th>
-                  <th className="px-3 py-2 truncate">Actions</th>
+                  <th className="px-3 py-2">Type de bois</th>
+                  <th className="px-3 py-2">Quantité</th>
+                  <th className="px-3 py-2">Prix unitaire (CDF)</th>
+                  <th className="px-3 py-2">Total (CDF)</th>
+                  <th className="px-3 py-2">Dernière mise à jour</th>
+                  <th className="px-3 py-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {stock.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-3 text-gray-400 text-xs sm:text-[10px]">
+                    <td colSpan={6} className="text-center py-3 text-gray-400 text-xs">
                       Aucun stock enregistré.
                     </td>
                   </tr>
                 ) : (
                   stock.map((s) => (
-                    <tr key={s.id} className="border-b hover:bg-blue-50 transition text-xs sm:text-[10px]">
-                      <td className="px-3 py-2 truncate">{s.type}</td>
-                      <td className="px-3 py-2 truncate">{s.quantity}</td>
-                      <td className="px-3 py-2 truncate">{formatCDF(s.unitPrice)}</td>
-                      <td className="px-3 py-2 font-semibold text-gray-900 truncate">{formatCDF(s.total)}</td>
-                      <td className="px-3 py-2 truncate">{new Date(s.date).toLocaleDateString("fr-FR")}</td>
+                    <tr key={s.id} className="border-b hover:bg-blue-50 transition text-xs">
+                      <td className="px-3 py-2">{s.type}</td>
+                      <td className="px-3 py-2">{s.quantity}</td>
+                      <td className="px-3 py-2">{formatCDF(s.unitPrice)}</td>
+                      <td className="px-3 py-2 font-semibold text-gray-900">{formatCDF(s.total)}</td>
+                      <td className="px-3 py-2">{new Date(s.date).toLocaleDateString("fr-FR")}</td>
                       <td className="px-3 py-2 flex flex-wrap gap-1">
                         <button
                           onClick={() => handleEdit(s)}
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs truncate"
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs"
                         >
                           Modifier
                         </button>
                         <button
                           onClick={() => handleDelete(s.id)}
-                          className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs truncate"
+                          className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
                         >
                           Supprimer
                         </button>
@@ -288,10 +273,10 @@ export default function StockPage() {
                 )}
               </tbody>
               {stock.length > 0 && (
-                <tfoot className="bg-gray-100 font-semibold text-xs sm:text-[10px]">
+                <tfoot className="bg-gray-100 font-semibold text-xs">
                   <tr>
-                    <td colSpan={3} className="px-3 py-2 text-right truncate">Valeur totale du stock :</td>
-                    <td className="px-3 py-2 text-blue-700 truncate">{formatCDF(totalGeneral)}</td>
+                    <td colSpan={3} className="px-3 py-2 text-right">Valeur totale du stock :</td>
+                    <td className="px-3 py-2 text-blue-700">{formatCDF(totalGeneral)}</td>
                     <td></td>
                     <td></td>
                   </tr>
@@ -302,7 +287,7 @@ export default function StockPage() {
         </main>
 
         {/* FOOTER */}
-        <div className="bg-blue-800 text-white text-center py-2 text-xs sm:text-[10px] mt-auto shadow-inner truncate">
+        <div className="bg-blue-800 text-white text-center py-2 text-xs mt-auto shadow-inner">
           © {new Date().getFullYear()} ScieriePro — Tous droits réservés.
         </div>
       </div>
