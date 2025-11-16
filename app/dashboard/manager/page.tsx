@@ -164,9 +164,9 @@ function Card({
     >
       <p className="text-xs sm:text-sm text-gray-600">{title}</p>
       <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mt-1">
-        {value.toLocaleString("en-US", {
+        {value.toLocaleString("fr-CD", {
           style: "currency",
-          currency: "USD",
+          currency: "CDF",
           minimumFractionDigits: 2,
         })}
       </h2>
@@ -205,9 +205,11 @@ function Graph({
             <YAxis />
             <Tooltip
               formatter={(value) =>
-                `$${Number(value).toLocaleString("en-US", {
+                Number(value).toLocaleString("fr-CD", {
+                  style: "currency",
+                  currency: "CDF",
                   minimumFractionDigits: 2,
-                })}`
+                })
               }
             />
           </LineChart>
@@ -263,9 +265,11 @@ function RecentTable({
                     className="px-2 sm:px-4 py-1.5 sm:py-2 whitespace-nowrap max-w-[100px] sm:max-w-[150px] truncate"
                   >
                     {typeof (item as any)[col] === "number"
-                      ? `$${Number((item as any)[col]).toLocaleString("en-US", {
+                      ? Number((item as any)[col]).toLocaleString("fr-CD", {
+                          style: "currency",
+                          currency: "CDF",
                           minimumFractionDigits: 2,
-                        })}`
+                        })
                       : (item as any)[col]}
                   </td>
                 ))}
@@ -277,3 +281,4 @@ function RecentTable({
     </div>
   );
 }
+
