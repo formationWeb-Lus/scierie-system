@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 // 🔹 GET : liste du stock
 export async function GET() {
@@ -13,10 +11,12 @@ export async function GET() {
   } catch (error) {
     console.error("Erreur GET /stock/api :", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
-// 🔹 POST : ajouter / mettre à jour un élément de stock
+// 🔹 POST : ajouter un élément de stock
 export async function POST(req: Request) {
   try {
     const data = await req.json();
@@ -64,7 +64,65 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Erreur POST /stock/api :", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
+// 🔹 PUT : modifier un élément existant
+export async function PUT(req: Request) {
+  try {
+    const data = await req.json();
+
+    if (!data.id || !data.type || !data.quantity || !data.unitPrice) {
+      return NextResponse.json(
+        { error: "Champs manquants" },
+        { status: 400 }
+      );
+    }
+
+    const total = parseFloat(data.quantity) * parseFloat(data.unitPrice);
+
+    const updated = await prisma.stock.update({
+      where: { id: data.id },
+      data: {
+        type: data.type,
+        quantity: parseFloat(data.quantity),
+        unitPrice: parseFloat(data.unitPrice),
+        total,
+        date: new Date(),
+      },
+    });
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error("Erreur PUT /stock/api :", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+// 🔹 DELETE : supprimer un élément
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "ID manquant" }, { status: 400 });
+    }
+
+    const deleted = await prisma.stock.delete({
+      where: { id: parseInt(id) },
+    });
+
+    return NextResponse.json({ success: true, deleted });
+  } catch (error) {
+    console.error("Erreur DELETE /stock/api :", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
 

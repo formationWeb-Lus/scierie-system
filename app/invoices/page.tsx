@@ -41,8 +41,10 @@ export default function InvoicePage() {
     quantity: "",
     price: "",
     modePaiement: "Espèces",
+    editId: 0, // pour savoir si on édite
   });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // 🔹 Charger les factures
   const fetchInvoices = async () => {
@@ -59,48 +61,106 @@ export default function InvoicePage() {
     fetchInvoices();
   }, []);
 
-  // 🔹 Gestion formulaire
+  // 🔹 Gestion du formulaire
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🔹 Ajouter une facture
+  // 🔹 Ajouter ou modifier une facture
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { clientNom, clientTelephone, typeDeProduit, quantity, price } = form;
+    const { clientNom, clientTelephone, typeDeProduit, quantity, price, clientAdresse, modePaiement, editId } = form;
+
     if (!clientNom || !clientTelephone || !typeDeProduit || !quantity || !price) {
       alert("Veuillez remplir tous les champs obligatoires !");
       return;
     }
 
-    await fetch("/invoices/api", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        quantity: Number(quantity),
-        price: Number(price),
-      }),
-    });
+    setLoading(true);
+    try {
+      if (editId) {
+        // 🔹 Modifier
+        await fetch("/invoices/api", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: editId,
+            clientNom,
+            clientTelephone,
+            clientAdresse,
+            typeDeProduit,
+            quantity: Number(quantity),
+            price: Number(price),
+            modePaiement,
+          }),
+        });
+      } else {
+        // 🔹 Ajouter
+        await fetch("/invoices/api", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientNom,
+            clientTelephone,
+            clientAdresse,
+            typeDeProduit,
+            quantity: Number(quantity),
+            price: Number(price),
+            modePaiement,
+          }),
+        });
+      }
 
+      setForm({
+        clientNom: "",
+        clientTelephone: "",
+        clientAdresse: "",
+        typeDeProduit: "",
+        quantity: "",
+        price: "",
+        modePaiement: "Espèces",
+        editId: 0,
+      });
+      fetchInvoices();
+    } catch {
+      alert("Erreur lors de l’enregistrement !");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔹 Pré-remplir formulaire pour modification
+  const handleEdit = (inv: Invoice) => {
     setForm({
-      clientNom: "",
-      clientTelephone: "",
-      clientAdresse: "",
-      typeDeProduit: "",
-      quantity: "",
-      price: "",
-      modePaiement: "Espèces",
+      clientNom: inv.clientNom,
+      clientTelephone: inv.clientTelephone,
+      clientAdresse: inv.clientAdresse || "",
+      typeDeProduit: inv.typeDeProduit,
+      quantity: inv.quantity.toString(),
+      price: inv.price.toString(),
+      modePaiement: inv.modePaiement,
+      editId: inv.id,
     });
-    fetchInvoices();
+    setMenuOpen(false);
+  };
+
+  // 🔹 Supprimer une facture
+  const handleDelete = async (id: number) => {
+    if (!confirm("Voulez-vous vraiment supprimer cette facture ?")) return;
+    try {
+      await fetch(`/invoices/api?id=${id}`, { method: "DELETE" });
+      fetchInvoices();
+    } catch {
+      alert("Erreur lors de la suppression !");
+    }
   };
 
   const totalGeneral = invoices.reduce((acc, inv) => acc + inv.total, 0);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* ✅ EN-TÊTE */}
+      {/* HEADER */}
       <header className="bg-blue-800 text-white flex items-center justify-between px-4 py-3 shadow-md sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <button
@@ -110,31 +170,22 @@ export default function InvoicePage() {
           >
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
-
           <div className="flex items-center gap-2">
             <span className="text-2xl">🧾</span>
-            <h1 className="text-lg sm:text-xl font-bold">Gestion des Factures</h1>
+            <h1 className="text-lg sm:text-xl font-bold">Factures</h1>
           </div>
         </div>
-
-        {/* Menu horizontal (grand écran) */}
-        <nav className="hidden lg:flex lg:items-center lg:space-x-6 text-sm">
-          <Link href="/" className="text-white/90 hover:text-white">Accueil</Link>
-          <Link href="/reports" className="text-white/90 hover:text-white">Rapports</Link>
-          <Link href="/parametres" className="text-white/90 hover:text-white">Paramètres</Link>
-          <Link href="/utilisateurs" className="text-white/90 hover:text-white">Utilisateurs</Link>
-        </nav>
       </header>
 
       <div className="flex flex-1">
-        {/* ✅ SIDEBAR */}
-        <aside className="hidden lg:flex flex-col w-64 bg-blue-900 text-gray-100 py-6 space-y-2 shadow-lg">
-          <div className="px-4 mb-4">
-            <div className="text-2xl font-bold">🪵 Scierie</div>
-            <div className="text-xs text-blue-200 mt-1">Gestion & Production</div>
+        {/* SIDEBAR */}
+        <aside className={`fixed lg:static top-0 left-0 h-full bg-blue-900 text-gray-100 w-64 transform ${menuOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 transition-transform duration-300 z-50`}>
+          <div className="p-4 text-2xl font-bold border-b border-blue-700 flex justify-between items-center">
+            🪵 Scierie
+            <button className="lg:hidden p-1 rounded hover:bg-blue-700" onClick={() => setMenuOpen(false)}><X size={20} /></button>
           </div>
 
-          <nav className="flex-1 px-2 space-y-1">
+          <nav className="flex flex-col p-4 space-y-2 text-sm">
             <MenuLink href="/" icon={<Home size={16} />} text="Accueil" />
             <MenuLink href="/charges" icon={<Settings size={16} />} text="Charges" />
             <MenuLink href="/stock" icon={<Package size={16} />} text="Stock" />
@@ -142,42 +193,38 @@ export default function InvoicePage() {
             <MenuLink href="/sales" icon={<ShoppingCart size={16} />} text="Ventes" />
             <MenuLink href="/expenses" icon={<DollarSign size={16} />} text="Dépenses" />
             <MenuLink href="/invoices" icon={<FileText size={16} />} text="Factures" />
+            <MenuLink href="/benefice" icon={<DollarSign size={16} />} text="Bénéfice" />
             <MenuLink href="/reports" icon={<BarChart2 size={16} />} text="Rapports" />
             <MenuLink href="/parametres" icon={<Settings size={16} />} text="Paramètres" />
             <MenuLink href="/utilisateurs" icon={<User size={16} />} text="Utilisateurs" />
           </nav>
 
-          <div className="px-4 py-4 text-xs text-blue-200 border-t border-blue-800">
+          <div className="mt-auto px-4 py-4 text-xs text-blue-200 border-t border-blue-800">
             © {new Date().getFullYear()} ScieriePro
           </div>
         </aside>
 
-        {/* ✅ CONTENU */}
+        {/* CONTENU */}
         <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
           {/* Formulaire */}
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white p-6 rounded-lg shadow-md grid grid-cols-1 sm:grid-cols-6 gap-4 mb-6"
-          >
-            <input name="clientNom" value={form.clientNom} onChange={handleChange} placeholder="Nom du client" className="border rounded px-2 py-2 text-sm" />
+          <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md grid grid-cols-1 sm:grid-cols-6 gap-3 mb-6">
+            <input name="clientNom" value={form.clientNom} onChange={handleChange} placeholder="Client" className="border rounded px-2 py-2 text-sm" />
             <input name="clientTelephone" value={form.clientTelephone} onChange={handleChange} placeholder="Téléphone" className="border rounded px-2 py-2 text-sm" />
-            <input name="clientAdresse" value={form.clientAdresse} onChange={handleChange} placeholder="Adresse (facultatif)" className="border rounded px-2 py-2 text-sm" />
-            <input name="typeDeProduit" value={form.typeDeProduit} onChange={handleChange} placeholder="Type de produit" className="border rounded px-2 py-2 text-sm" />
-            <input type="number" name="quantity" value={form.quantity} onChange={handleChange} placeholder="Quantité" className="border rounded px-2 py-2 text-sm" />
-            <input type="number" name="price" value={form.price} onChange={handleChange} placeholder="Prix unitaire" className="border rounded px-2 py-2 text-sm" />
-
+            <input name="clientAdresse" value={form.clientAdresse} onChange={handleChange} placeholder="Adresse" className="border rounded px-2 py-2 text-sm" />
+            <input name="typeDeProduit" value={form.typeDeProduit} onChange={handleChange} placeholder="Produit" className="border rounded px-2 py-2 text-sm" />
+            <input type="number" name="quantity" value={form.quantity} onChange={handleChange} placeholder="Qté" className="border rounded px-2 py-2 text-sm" />
+            <input type="number" name="price" value={form.price} onChange={handleChange} placeholder="Prix" className="border rounded px-2 py-2 text-sm" />
             <select name="modePaiement" value={form.modePaiement} onChange={handleChange} className="border rounded px-2 py-2 text-sm">
               <option value="Espèces">Espèces</option>
               <option value="Mobile Money">Mobile Money</option>
-              <option value="Virement">Virement bancaire</option>
+              <option value="Virement">Virement</option>
             </select>
-
-            <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 col-span-1 sm:col-span-2">
-              💾 Enregistrer
+            <button type="submit" disabled={loading} className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 col-span-1 sm:col-span-2">
+              {form.editId ? "✏️ Modifier" : "💾 Ajouter"}
             </button>
           </form>
 
-          {/* Tableau des factures */}
+          {/* Tableau */}
           <div className="overflow-x-auto bg-white shadow-md rounded-lg">
             <table className="min-w-full text-xs sm:text-sm text-left text-gray-600">
               <thead className="bg-blue-600 text-white uppercase">
@@ -192,14 +239,13 @@ export default function InvoicePage() {
                   <th className="px-3 py-2">Paiement</th>
                   <th className="px-3 py-2">Statut</th>
                   <th className="px-3 py-2">Date</th>
+                  <th className="px-3 py-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {invoices.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="text-center py-3 text-gray-400">
-                      Aucune facture enregistrée.
-                    </td>
+                    <td colSpan={11} className="text-center py-3 text-gray-400">Aucune facture.</td>
                   </tr>
                 ) : (
                   invoices.map((inv) => (
@@ -209,22 +255,25 @@ export default function InvoicePage() {
                       <td className="px-3 py-2">{inv.clientTelephone}</td>
                       <td className="px-3 py-2">{inv.typeDeProduit}</td>
                       <td className="px-3 py-2">{inv.quantity}</td>
-                      <td className="px-3 py-2">${inv.price.toLocaleString()}</td>
-                      <td className="px-3 py-2 font-semibold">${inv.total.toLocaleString()}</td>
+                      <td className="px-3 py-2">{inv.price.toLocaleString()}</td>
+                      <td className="px-3 py-2 font-semibold">{inv.total.toLocaleString()}</td>
                       <td className="px-3 py-2">{inv.modePaiement}</td>
                       <td className="px-3 py-2">{inv.statut}</td>
                       <td className="px-3 py-2">{new Date(inv.createdAt).toLocaleDateString()}</td>
+                      <td className="px-3 py-2 flex gap-1">
+                        <button onClick={() => handleEdit(inv)} className="bg-yellow-500 text-white rounded px-2 py-1 text-xs">✏️</button>
+                        <button onClick={() => handleDelete(inv.id)} className="bg-red-600 text-white rounded px-2 py-1 text-xs">🗑️</button>
+                      </td>
                     </tr>
                   ))
                 )}
               </tbody>
-
               {invoices.length > 0 && (
                 <tfoot className="bg-gray-100 font-semibold">
                   <tr>
                     <td colSpan={6} className="text-right px-3 py-2">Total :</td>
-                    <td className="px-3 py-2 text-blue-700">${totalGeneral.toLocaleString()}</td>
-                    <td colSpan={3}></td>
+                    <td className="px-3 py-2 text-blue-700">{totalGeneral.toLocaleString()}</td>
+                    <td colSpan={4}></td>
                   </tr>
                 </tfoot>
               )}
@@ -233,73 +282,18 @@ export default function InvoicePage() {
         </main>
       </div>
 
-      {/* ✅ FOOTER */}
+      {/* FOOTER */}
       <footer className="bg-blue-900 text-gray-200 py-3 text-center text-sm shadow-inner">
         © {new Date().getFullYear()} ScieriePro — Tous droits réservés.
       </footer>
-
-      {/* ✅ MENU MOBILE */}
-      {menuOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-40 z-40 lg:hidden"
-          onClick={() => setMenuOpen(false)}
-        >
-          <aside
-            onClick={(e) => e.stopPropagation()}
-            className="absolute left-0 top-0 w-64 h-full bg-blue-900 text-gray-100 py-6 px-4 space-y-4 shadow-lg animate-slideIn"
-          >
-            <div className="mb-4">
-              <div className="text-2xl font-bold">🧾 ScieriePro</div>
-              <div className="text-xs text-blue-200 mt-1">Menu</div>
-            </div>
-
-            <nav className="flex flex-col space-y-2">
-              <MobileMenuLink href="/" icon={<Home size={18} />} text="Accueil" onClick={() => setMenuOpen(false)} />
-              <MobileMenuLink href="/charges" icon={<Settings size={18} />} text="Charges" onClick={() => setMenuOpen(false)} />
-              <MobileMenuLink href="/stock" icon={<Package size={18} />} text="Stock" onClick={() => setMenuOpen(false)} />
-              <MobileMenuLink href="/production" icon={<Factory size={18} />} text="Production" onClick={() => setMenuOpen(false)} />
-              <MobileMenuLink href="/sales" icon={<ShoppingCart size={18} />} text="Ventes" onClick={() => setMenuOpen(false)} />
-              <MobileMenuLink href="/expenses" icon={<DollarSign size={18} />} text="Dépenses" onClick={() => setMenuOpen(false)} />
-              <MobileMenuLink href="/invoices" icon={<FileText size={18} />} text="Factures" onClick={() => setMenuOpen(false)} />
-              <MobileMenuLink href="/reports" icon={<BarChart2 size={18} />} text="Rapports" onClick={() => setMenuOpen(false)} />
-              <MobileMenuLink href="/parametres" icon={<Settings size={18} />} text="Paramètres" onClick={() => setMenuOpen(false)} />
-              <MobileMenuLink href="/utilisateurs" icon={<User size={18} />} text="Utilisateurs" onClick={() => setMenuOpen(false)} />
-            </nav>
-          </aside>
-        </div>
-      )}
     </div>
   );
 }
 
-/* 🔸 Lien du menu (desktop) */
+/* Lien menu desktop */
 function MenuLink({ href, icon, text }: { href: string; icon: React.ReactNode; text: string }) {
   return (
-    <Link href={href} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-blue-800 transition text-sm">
-      <span className="text-blue-100">{icon}</span>
-      <span>{text}</span>
-    </Link>
-  );
-}
-
-/* 🔸 Lien du menu mobile */
-function MobileMenuLink({
-  href,
-  icon,
-  text,
-  onClick,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  text: string;
-  onClick?: () => void;
-}) {
-  return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-blue-800 transition text-sm"
-    >
+    <Link href={href} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-blue-800 transition text-sm">
       <span className="text-blue-100">{icon}</span>
       <span>{text}</span>
     </Link>
