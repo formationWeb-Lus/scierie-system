@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { updateBenefice } from "@/lib/updateBenefice";
 
 // ===============================
 // 🔹 GET — récupérer toutes les productions
@@ -23,7 +24,10 @@ export async function POST(req: Request) {
   try {
     const data = await req.json();
     if (!data.typeBois || !data.quantity || !data.unitPrice) {
-      return NextResponse.json({ error: "Champs manquants : typeBois, quantity ou unitPrice" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Champs manquants : typeBois, quantity ou unitPrice" },
+        { status: 400 }
+      );
     }
 
     const newProduction = await prisma.production.create({
@@ -35,6 +39,9 @@ export async function POST(req: Request) {
         date: new Date(),
       },
     });
+
+    // Mise à jour du bénéfice
+    await updateBenefice();
 
     return NextResponse.json(newProduction, { status: 201 });
   } catch (error: any) {
@@ -50,7 +57,10 @@ export async function PUT(req: Request) {
   try {
     const data = await req.json();
     if (!data.id || !data.typeBois || !data.quantity || !data.unitPrice) {
-      return NextResponse.json({ error: "Champs manquants : id, typeBois, quantity ou unitPrice" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Champs manquants : id, typeBois, quantity ou unitPrice" },
+        { status: 400 }
+      );
     }
 
     const updatedProduction = await prisma.production.update({
@@ -62,6 +72,9 @@ export async function PUT(req: Request) {
         total: parseFloat(data.quantity) * parseFloat(data.unitPrice),
       },
     });
+
+    // Mise à jour du bénéfice
+    await updateBenefice();
 
     return NextResponse.json(updatedProduction);
   } catch (error: any) {
@@ -79,12 +92,18 @@ export async function DELETE(req: Request) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ error: "ID manquant pour la suppression" }, { status: 400 });
+      return NextResponse.json(
+        { error: "ID manquant pour la suppression" },
+        { status: 400 }
+      );
     }
 
     await prisma.production.delete({
       where: { id: Number(id) },
     });
+
+    // Mise à jour du bénéfice
+    await updateBenefice();
 
     return NextResponse.json({ message: "Production supprimée avec succès" });
   } catch (error: any) {

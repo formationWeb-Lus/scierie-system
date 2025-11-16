@@ -189,11 +189,18 @@ export default function ProductionsPage() {
             </div>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-4 sm:gap-6 text-[10px] sm:text-sm">
-            <a href="/dashboard" className="hover:text-gray-200">Accueil</a>
-            <a href="/reports" className="hover:text-gray-200">Rapports</a>
-            <a href="/settings" className="hover:text-gray-200">Paramètres</a>
-            <a href="/users" className="hover:text-gray-200">Utilisateurs</a>
+          <nav className="hidden lg:flex gap-4 text-sm text-white/90">
+            <a href="/dashboard" className="hover:text-white">Accueil</a>
+            <a href="/charges" className="hover:text-white">Charges</a>
+            <a href="/stock" className="hover:text-white">Stock</a>
+            <a href="/productions" className="hover:text-white">Productions</a>
+            <a href="/sales" className="hover:text-white">Ventes</a>
+            <a href="/invoices" className="hover:text-white">Factures</a>
+            <a href="/depenses" className="hover:text-white">Dépenses</a>
+            <a href="/benefice" className="hover:text-white">Bénéfice</a>
+            <a href="/reports" className="hover:text-white">Rapports</a>
+            <a href="/settings" className="hover:text-white">Paramètres</a>
+            <a href="/users" className="hover:text-white">Utilisateurs</a>
           </nav>
         </header>
 

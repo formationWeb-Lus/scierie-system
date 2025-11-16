@@ -166,7 +166,13 @@ export default function SalesPage() {
 
         <nav className="hidden lg:flex lg:items-center lg:space-x-6 text-sm">
           <Link href="/" className="text-white/90 hover:text-white">Accueil</Link>
+          <Link href="/charges" className="text-white/90 hover:text-white">Charges</Link>
+          <Link href="/stock" className="text-white/90 hover:text-white">Stock</Link>
+          <Link href="/productions" className="text-white/90 hover:text-white">Productions</Link>
           <Link href="/sales" className="text-white/90 hover:text-white">Ventes</Link>
+          <Link href="/expenses" className="text-white/90 hover:text-white">Dépenses</Link>
+          <Link href="/invoices" className="text-white/90 hover:text-white">Factures</Link>
+          <Link href="/benefice" className="text-white/90 hover:text-white">Bénéfice</Link>
           <Link href="/reports" className="text-white/90 hover:text-white">Rapports</Link>
           <Link href="/parametres" className="text-white/90 hover:text-white">Paramètres</Link>
           <Link href="/utilisateurs" className="text-white/90 hover:text-white">Utilisateurs</Link>

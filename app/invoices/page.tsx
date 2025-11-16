@@ -193,6 +193,7 @@ export default function InvoicePage() {
             <MenuLink href="/sales" icon={<ShoppingCart size={16} />} text="Ventes" />
             <MenuLink href="/expenses" icon={<DollarSign size={16} />} text="Dépenses" />
             <MenuLink href="/invoices" icon={<FileText size={16} />} text="Factures" />
+            <MenuLink href="/benefice" icon={<DollarSign size={16} />} text="Bénéfice" />
             <MenuLink href="/reports" icon={<BarChart2 size={16} />} text="Rapports" />
             <MenuLink href="/parametres" icon={<Settings size={16} />} text="Paramètres" />
             <MenuLink href="/utilisateurs" icon={<User size={16} />} text="Utilisateurs" />

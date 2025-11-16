@@ -131,18 +131,20 @@ export default function StockPage() {
           </button>
         </div>
 
-        <nav className="flex flex-col p-4 space-y-2 text-sm">
-          <a href="/dashboard" className="hover:bg-blue-700 px-3 py-2 rounded truncate">📊 Tableau de bord</a>
-          <a href="/charges" className="hover:bg-blue-700 px-3 py-2 rounded truncate">💰 Charges</a>
-          <a href="/expenses" className="hover:bg-blue-700 px-3 py-2 rounded truncate">💸 Dépenses</a>
-          <a href="/invoices" className="hover:bg-blue-700 px-3 py-2 rounded truncate">🧾 Factures</a>
-          <a href="/productions" className="hover:bg-blue-700 px-3 py-2 rounded truncate">🪚 Productions</a>
-          <a href="/sales" className="hover:bg-blue-700 px-3 py-2 rounded truncate">🛒 Ventes</a>
-          <a href="/stock" className="bg-blue-700 px-3 py-2 rounded truncate">📦 Stock</a>
-          <a href="/reports" className="hover:bg-blue-700 px-3 py-2 rounded truncate">📊 Rapports</a>
-          <a href="/settings" className="hover:bg-blue-700 px-3 py-2 rounded truncate">⚙️ Paramètres</a>
-          <a href="/users" className="hover:bg-blue-700 px-3 py-2 rounded truncate">👤 Utilisateurs</a>
-        </nav>
+        
+          <nav className="hidden lg:flex gap-4 text-sm text-white/90">
+            <a href="/dashboard" className="hover:text-white">Accueil</a>
+            <a href="/charges" className="hover:text-white">Charges</a>
+            <a href="/stock" className="hover:text-white">Stock</a>
+            <a href="/productions" className="hover:text-white">Productions</a>
+            <a href="/sales" className="hover:text-white">Ventes</a>
+            <a href="/invoices" className="hover:text-white">Factures</a>
+            <a href="/depenses" className="hover:text-white">Dépenses</a>
+            <a href="/benefice" className="hover:text-white">Bénéfice</a>
+            <a href="/reports" className="hover:text-white">Rapports</a>
+            <a href="/settings" className="hover:text-white">Paramètres</a>
+            <a href="/users" className="hover:text-white">Utilisateurs</a>
+          </nav>
 
         <div className="mt-auto px-4 py-4 text-xs text-blue-200 border-t border-blue-700">
           © {new Date().getFullYear()} ScieriePro

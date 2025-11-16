@@ -21,7 +21,7 @@ model Charge {
 }
 
 // ==============================
-// TABLE : Dépenses (Expenses)
+// TABLE : Dépenses
 // ==============================
 model Depense {
   id        Int      @id @default(autoincrement())
@@ -31,6 +31,9 @@ model Depense {
   createdAt DateTime @default(now())
 }
 
+// ==============================
+// TABLE : Factures
+// ==============================
 model Facture {
   id                Int       @id @default(autoincrement())
   numeroFacture     String    @unique @default("FAC-INIT")
@@ -45,17 +48,15 @@ model Facture {
   modePaiement      String    @default("Espèces")
   statut            String    @default("Payée")
 
-  // Infos entreprise (fixes)
-  entrepriseNom     String    @default("Scierie du Congo SARL")
-  entrepriseAdresse String    @default("Avenue Industrielle, Kinshasa, RDC")
-  entrepriseTelephone String  @default("+243 999 999 999")
-  entrepriseEmail   String?   @default("contact@scierieducongo.com")
-  entrepriseNIF     String?   @default("NIF A123456789")
+  // Infos entreprise
+  entrepriseNom        String   @default("Scierie du Congo SARL")
+  entrepriseAdresse    String   @default("Avenue Industrielle, Kinshasa, RDC")
+  entrepriseTelephone  String   @default("+243 999 999 999")
+  entrepriseEmail      String?  @default("contact@scierieducongo.com")
+  entrepriseNIF        String?  @default("NIF A123456789")
 
   createdAt         DateTime  @default(now())
 }
-
-
 
 // ==============================
 // TABLE : Productions
@@ -71,7 +72,8 @@ model Production {
 }
 
 // ==============================
-// TABLE : Ventes (Sales)
+// TABLE : Stocks
+// ==============================
 model Stock {
   id        Int      @id @default(autoincrement())
   type      String
@@ -82,6 +84,9 @@ model Stock {
   createdAt DateTime @default(now())
 }
 
+// ==============================
+// TABLE : Ventes
+// ==============================
 model Vente {
   id        Int      @id @default(autoincrement())
   date      DateTime
@@ -92,6 +97,10 @@ model Vente {
   unite     String?
   createdAt DateTime @default(now())
 }
+
+// ==============================
+// TABLE : Utilisateurs
+// ==============================
 model User {
   id        Int      @id @default(autoincrement())
   name      String
@@ -105,4 +114,16 @@ enum Role {
   ADMIN
   MANAGER
   EMPLOYEE
+}
+
+// ==============================
+// 🆕 TABLE : Benefice
+// ==============================
+model Benefice {
+  id              Int      @id @default(autoincrement())
+  totalProduction Float    @default(0)
+  totalCharges    Float    @default(0)
+  totalDepenses   Float    @default(0)
+  beneficeNet     Float    @default(0)
+  updatedAt       DateTime @updatedAt
 }
