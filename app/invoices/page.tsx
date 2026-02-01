@@ -131,7 +131,10 @@ export default function InvoicePage() {
     try { await fetch(`/invoices/api?id=${id}`, { method: "DELETE" }); fetchInvoices(); } catch { alert("Erreur lors de la suppression !"); }
   };
 
-  const printInvoice = (invoice: Invoice) => {
+  const printInvoice = async (invoice: Invoice) => {
+  // Import dynamique pour éviter le build côté serveur
+  const html2pdf = (await import("html2pdf.js")).default;
+
   const element = document.createElement("div");
   element.innerHTML = `
     <div style="font-family: sans-serif; padding: 10px; width: 190mm; box-sizing: border-box;">
@@ -189,18 +192,17 @@ export default function InvoicePage() {
   `;
 
   html2pdf()
-  .set({
-    margin: [5, 5, 5, 5],
-    filename: `Facture-${invoice.numeroFacture}.pdf`,
-    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-    html2canvas: { scale: 1, scrollY: -window.scrollY },
-    // ⚡ Ignorer le type TypeScript pour pagebreak
-    ...( { pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } } as any )
-  })
-  .from(element)
-  .save();
-
+    .set({
+      margin: [5, 5, 5, 5],
+      filename: `Facture-${invoice.numeroFacture}.pdf`,
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      html2canvas: { scale: 1, scrollY: -window.scrollY },
+      ...( { pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } } as any )
+    })
+    .from(element)
+    .save();
 };
+
 
 
   return (
