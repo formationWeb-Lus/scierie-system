@@ -5,9 +5,9 @@ import { Buffer } from "buffer";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }  // ← ici
 ) {
-  const id = params.id;
+  const { id } = await context.params;           // ← await params
 
   const facture = await prisma.facture.findUnique({
     where: { id: Number(id) },
