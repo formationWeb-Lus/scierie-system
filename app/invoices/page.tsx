@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { X, Menu, Home, Settings, Package, Factory, ShoppingCart, DollarSign, FileText, BarChart2, User } from "lucide-react";
-import html2pdf from "html2pdf.js";
 
 interface Product {
   typeDeProduit: string;
