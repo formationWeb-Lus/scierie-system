@@ -130,137 +130,137 @@ export default function InvoicePage() {
     setIsLocked(false); // prêt pour nouvelle facture
     fetchInvoices();
   };
-
-  /* ===== PRINT FACTURE PRO ===== */
-  const printInvoice = async (inv: Invoice) => {
+const printInvoice = async (inv: Invoice) => {
   const html2pdf = (await import("html2pdf.js")).default;
 
   const element = document.createElement("div");
 
   element.innerHTML = `
+  <div style="
+    font-family: Arial, sans-serif;
+    padding:18px;
+    width:180mm;
+    color:#000;
+    line-height:1.8;
+    font-size:15px;
+    font-weight:700;
+  ">
+
+    <!-- EN-TÊTE : ENTREPRISE À GAUCHE / CLIENT À DROITE -->
     <div style="
-      font-family: Arial, sans-serif;
-      padding:25px;
-      width:190mm;
-      color:#000;
-      line-height:1.6;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      margin-bottom:14px;
     ">
 
-      <!-- EN-TÊTE -->
-      <div style="
-        display:flex;
-        justify-content:space-between;
-        margin-bottom:30px;
-      ">
-
-        <!-- ENTREPRISE -->
-        <div style="max-width:60%;">
-          <h2 style="margin:0; color:#1e40af;">
-            Scierie du Congo SARL
-          </h2>
-          <p style="margin:4px 0; color:#1e40af;">
-            Email : contact@scieriecongo.com
-          </p>
-          <p style="margin:4px 0; color:#dc2626;">
-            Tél : +243 999 999 999
-          </p>
-          <p style="margin:4px 0; font-size:12px;">
-            RCCM : <strong>CD/KIN/12345</strong><br/>
-            TVA : <strong>123456</strong>
-          </p>
+      <!-- ENTREPRISE -->
+      <div style="width:50%; text-align:left;">
+        <div style="font-size:18px; font-weight:800;">
+          SCIERIE DU CONGO SARL
         </div>
-
-        <!-- CLIENT -->
-        <div style="text-align:right;">
-          <h3 style="margin:0;">FACTURE</h3>
-          <p><strong>N° :</strong> ${inv.numeroFacture}</p>
-          <p><strong>Date :</strong> ${new Date(inv.createdAt).toLocaleDateString()}</p>
-          <br/>
-          <p><strong>Client :</strong> ${inv.clientNom}</p>
-          <p><strong>Tél :</strong> ${inv.clientTelephone}</p>
-          <p><strong>Adresse :</strong> ${inv.clientAdresse || ""}</p>
+        <div style="margin-top:6px; font-size:14px;">
+          Email : contact@scieriecongo.com<br/>
+          Tél : +243 999 999 999<br/>
+          RCCM : CD/KIN/12345<br/>
+          TVA : 123456
         </div>
       </div>
 
-      <!-- TABLE PRODUITS -->
-      <table style="
-        width:100%;
-        border-collapse:collapse;
-        font-size:12px;
-        margin-bottom:20px;
-      ">
-        <thead>
-          <tr>
-            <th style="border:1px solid #000; padding:10px;">Produit</th>
-            <th style="border:1px solid #000; padding:10px;">Quantité</th>
-            <th style="border:1px solid #000; padding:10px;">Prix Unitaire</th>
-            <th style="border:1px solid #000; padding:10px;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${inv.products.map(p => `
-            <tr>
-              <td style="border:1px solid #000; padding:10px;">
-                ${p.typeDeProduit}
-              </td>
-              <td style="border:1px solid #000; padding:10px; text-align:center;">
-                ${p.quantity}
-              </td>
-              <td style="border:1px solid #000; padding:10px; text-align:right;">
-                ${p.price.toLocaleString()} CDF
-              </td>
-              <td style="border:1px solid #000; padding:10px; text-align:right;">
-                ${p.total.toLocaleString()} CDF
-              </td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
+      <!-- CLIENT -->
+      <div style="width:45%; text-align:right; font-size:14px;">
+        <div style="font-size:16px; font-weight:800;">
+          FACTURE
+        </div>
+        <div style="margin-top:6px;">
+          <strong>N° :</strong> ${inv.numeroFacture}<br/>
+          <strong>Date :</strong> ${new Date(inv.createdAt).toLocaleDateString()}<br/><br/>
 
-      <!-- TOTAL GLOBAL -->
-      <div style="
-        margin-top:25px;
-        padding-top:10px;
-        border-top:2px solid #000;
-        text-align:right;
-        font-size:14px;
-        font-weight:bold;
-      ">
-        TOTAL GLOBAL : ${inv.total.toLocaleString()} CDF
-      </div>
-
-      <!-- MESSAGE -->
-      <div style="
-        margin-top:35px;
-        font-size:12px;
-        text-align:center;
-        color:#333;
-      ">
-        <p>
-          Merci pour votre confiance.<br/>
-          Nous espérons avoir le plaisir de vous servir à nouveau très prochainement.
-        </p>
-        <p style="margin-top:15px; font-weight:bold;">
-          Scierie du Congo SARL
-        </p>
+          <strong>Client :</strong> ${inv.clientNom}<br/>
+          <strong>Tél :</strong> ${inv.clientTelephone}<br/>
+          <strong>Adresse :</strong> ${inv.clientAdresse || "-"}
+        </div>
       </div>
 
     </div>
+
+    <!-- LIGNE DE SÉPARATION COLLÉE À LA TABLE -->
+    <hr style="border:2px solid #000; margin:6px 0 10px 0;" />
+
+    <!-- TABLE PRODUITS -->
+    <table style="
+      width:100%;
+      border-collapse:collapse;
+      font-size:15px;
+    ">
+      <thead>
+        <tr>
+          <th style="border:2.5px solid #000; padding:7px;">Produit</th>
+          <th style="border:2.5px solid #000; padding:7px;">Qté</th>
+          <th style="border:2.5px solid #000; padding:7px;">Prix</th>
+          <th style="border:2.5px solid #000; padding:7px;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${inv.products.map(p => `
+          <tr>
+            <td style="border:2.5px solid #000; padding:7px;">
+              ${p.typeDeProduit}
+            </td>
+            <td style="border:2.5px solid #000; padding:7px; text-align:center;">
+              ${p.quantity}
+            </td>
+            <td style="border:2.5px solid #000; padding:7px; text-align:right;">
+              ${p.price.toLocaleString()} CDF
+            </td>
+            <td style="border:2.5px solid #000; padding:7px; text-align:right;">
+              ${p.total.toLocaleString()} CDF
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+
+    <!-- TOTAL -->
+    <div style="
+      margin-top:18px;
+      padding-top:10px;
+      border-top:3px solid #000;
+      font-size:17px;
+      font-weight:800;
+      text-align:right;
+    ">
+      TOTAL GLOBAL : ${inv.total.toLocaleString()} CDF
+    </div>
+
+    <!-- MESSAGE -->
+    <div style="
+      margin-top:26px;
+      text-align:center;
+      font-size:14px;
+      font-weight:700;
+    ">
+      Merci pour votre confiance.<br/>
+      SCIERIE DU CONGO SARL
+    </div>
+
+  </div>
   `;
 
   html2pdf()
     .set({
-      margin: 5,
+      margin: 4,
       filename: `Facture-${inv.numeroFacture}.pdf`,
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      html2canvas: { scale: 2 },
+      html2canvas: {
+        scale: 3.5,   // netteté maximale pour petite imprimante
+        letterRendering: true,
+        useCORS: true
+      },
     })
     .from(element)
     .save();
 };
-
-
-  /* ================= UI ================= */
 
   return (
     <div className="p-6 space-y-6 bg-gray-100 min-h-screen">
