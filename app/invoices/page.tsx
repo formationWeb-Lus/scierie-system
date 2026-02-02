@@ -130,6 +130,8 @@ export default function InvoicePage() {
     setIsLocked(false); // prêt pour nouvelle facture
     fetchInvoices();
   };
+
+  /* ===== IMPRIMER FACTURE ===== */
 const printInvoice = async (inv: Invoice) => {
   const html2pdf = (await import("html2pdf.js")).default;
 
@@ -138,12 +140,12 @@ const printInvoice = async (inv: Invoice) => {
   element.innerHTML = `
   <div style="
     font-family: Arial, sans-serif;
-    padding:18px;
+    padding:16px;
     width:180mm;
     color:#000;
-    line-height:1.8;
-    font-size:15px;
-    font-weight:700;
+    line-height:1.9;
+    font-size:16px;
+    font-weight:800;
   ">
 
     <!-- EN-TÊTE : ENTREPRISE À GAUCHE / CLIENT À DROITE -->
@@ -151,15 +153,15 @@ const printInvoice = async (inv: Invoice) => {
       display:flex;
       justify-content:space-between;
       align-items:flex-start;
-      margin-bottom:14px;
+      margin-bottom:10px;
     ">
 
       <!-- ENTREPRISE -->
       <div style="width:50%; text-align:left;">
-        <div style="font-size:18px; font-weight:800;">
+        <div style="font-size:19px; font-weight:900;">
           SCIERIE DU CONGO SARL
         </div>
-        <div style="margin-top:6px; font-size:14px;">
+        <div style="margin-top:6px; font-size:15px;">
           Email : contact@scieriecongo.com<br/>
           Tél : +243 999 999 999<br/>
           RCCM : CD/KIN/12345<br/>
@@ -168,8 +170,8 @@ const printInvoice = async (inv: Invoice) => {
       </div>
 
       <!-- CLIENT -->
-      <div style="width:45%; text-align:right; font-size:14px;">
-        <div style="font-size:16px; font-weight:800;">
+      <div style="width:45%; text-align:right; font-size:15px;">
+        <div style="font-size:18px; font-weight:900;">
           FACTURE
         </div>
         <div style="margin-top:6px;">
@@ -184,36 +186,36 @@ const printInvoice = async (inv: Invoice) => {
 
     </div>
 
-    <!-- LIGNE DE SÉPARATION COLLÉE À LA TABLE -->
-    <hr style="border:2px solid #000; margin:6px 0 10px 0;" />
+    <!-- SÉPARATION FORTE -->
+    <hr style="border:4px solid #000; margin:6px 0 10px 0;" />
 
     <!-- TABLE PRODUITS -->
     <table style="
       width:100%;
       border-collapse:collapse;
-      font-size:15px;
+      font-size:16px;
     ">
       <thead>
         <tr>
-          <th style="border:2.5px solid #000; padding:7px;">Produit</th>
-          <th style="border:2.5px solid #000; padding:7px;">Qté</th>
-          <th style="border:2.5px solid #000; padding:7px;">Prix</th>
-          <th style="border:2.5px solid #000; padding:7px;">Total</th>
+          <th style="border:3px solid #000; padding:8px;">Produit</th>
+          <th style="border:3px solid #000; padding:8px;">Qté</th>
+          <th style="border:3px solid #000; padding:8px;">Prix</th>
+          <th style="border:3px solid #000; padding:8px;">Total</th>
         </tr>
       </thead>
       <tbody>
         ${inv.products.map(p => `
           <tr>
-            <td style="border:2.5px solid #000; padding:7px;">
+            <td style="border:3px solid #000; padding:8px;">
               ${p.typeDeProduit}
             </td>
-            <td style="border:2.5px solid #000; padding:7px; text-align:center;">
+            <td style="border:3px solid #000; padding:8px; text-align:center;">
               ${p.quantity}
             </td>
-            <td style="border:2.5px solid #000; padding:7px; text-align:right;">
+            <td style="border:3px solid #000; padding:8px; text-align:right;">
               ${p.price.toLocaleString()} CDF
             </td>
-            <td style="border:2.5px solid #000; padding:7px; text-align:right;">
+            <td style="border:3px solid #000; padding:8px; text-align:right;">
               ${p.total.toLocaleString()} CDF
             </td>
           </tr>
@@ -223,11 +225,11 @@ const printInvoice = async (inv: Invoice) => {
 
     <!-- TOTAL -->
     <div style="
-      margin-top:18px;
-      padding-top:10px;
-      border-top:3px solid #000;
-      font-size:17px;
-      font-weight:800;
+      margin-top:16px;
+      padding-top:12px;
+      border-top:4px solid #000;
+      font-size:18px;
+      font-weight:900;
       text-align:right;
     ">
       TOTAL GLOBAL : ${inv.total.toLocaleString()} CDF
@@ -235,10 +237,10 @@ const printInvoice = async (inv: Invoice) => {
 
     <!-- MESSAGE -->
     <div style="
-      margin-top:26px;
+      margin-top:24px;
       text-align:center;
-      font-size:14px;
-      font-weight:700;
+      font-size:15px;
+      font-weight:800;
     ">
       Merci pour votre confiance.<br/>
       SCIERIE DU CONGO SARL
@@ -249,11 +251,11 @@ const printInvoice = async (inv: Invoice) => {
 
   html2pdf()
     .set({
-      margin: 4,
+      margin: 3,
       filename: `Facture-${inv.numeroFacture}.pdf`,
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       html2canvas: {
-        scale: 3.5,   // netteté maximale pour petite imprimante
+        scale: 4,              // 🔥 ULTRA NET
         letterRendering: true,
         useCORS: true
       },
