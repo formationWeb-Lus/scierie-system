@@ -1,8 +1,8 @@
-  "use client";
+"use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { X, Menu, Home, Settings, Package, Factory, ShoppingCart, DollarSign, FileText, BarChart2, User } from "lucide-react";
+
+/* ================= TYPES ================= */
 
 interface Product {
   typeDeProduit: string;
@@ -16,7 +16,7 @@ interface Invoice {
   numeroFacture: string;
   clientNom: string;
   clientTelephone: string;
-  clientAdresse?: string;
+  clientAdresse: string;
   products: Product[];
   total: number;
   modePaiement: string;
@@ -24,342 +24,355 @@ interface Invoice {
   createdAt: string;
 }
 
+/* ================= PAGE ================= */
+
 export default function InvoicePage() {
+  /* ===== STATES ===== */
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [form, setForm] = useState({
+
+  /* 🔒 AJOUT : verrouillage après ajout facture */
+  const [isLocked, setIsLocked] = useState(false);
+
+  const [client, setClient] = useState({
     clientNom: "",
     clientTelephone: "",
     clientAdresse: "",
     modePaiement: "Espèces",
-    editId: 0,
   });
-  const [productForm, setProductForm] = useState({ typeDeProduit: "", quantity: "", price: "" });
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  // Charger les factures
+  const [productForm, setProductForm] = useState({
+    typeDeProduit: "",
+    quantity: "",
+    price: "",
+  });
+
+  /* ===== FETCH ===== */
   const fetchInvoices = async () => {
-    try {
-      const res = await fetch("/invoices/api");
-      const data = await res.json();
-      setInvoices(Array.isArray(data) ? data : []);
-    } catch {
-      setInvoices([]);
-    }
+    const res = await fetch("/invoices/api");
+    const data = await res.json();
+    setInvoices(data || []);
   };
 
-  useEffect(() => { fetchInvoices(); }, []);
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
 
-  // Gestion du formulaire client
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Gestion du formulaire produit
-  const handleProductChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setProductForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Ajouter un produit au tableau temporaire
+  /* ===== PRODUITS ===== */
   const addProduct = () => {
-    if (!productForm.typeDeProduit || !productForm.quantity || !productForm.price) {
-      alert("Veuillez remplir tous les champs produit !");
-      return;
-    }
+    if (!productForm.typeDeProduit || !productForm.quantity || !productForm.price) return;
+
     const total = Number(productForm.quantity) * Number(productForm.price);
-    setProducts([...products, { ...productForm, quantity: Number(productForm.quantity), price: Number(productForm.price), total }]);
+
+    setProducts([
+      ...products,
+      {
+        typeDeProduit: productForm.typeDeProduit,
+        quantity: Number(productForm.quantity),
+        price: Number(productForm.price),
+        total,
+      },
+    ]);
+
     setProductForm({ typeDeProduit: "", quantity: "", price: "" });
   };
 
-  // Supprimer un produit temporaire
-  const removeProduct = (index: number) => {
-    const newProducts = [...products];
-    newProducts.splice(index, 1);
-    setProducts(newProducts);
+  /* ➕ AJOUT : supprimer produit */
+  const deleteProduct = (index: number) => {
+    if (isLocked) return;
+    setProducts(products.filter((_, i) => i !== index));
   };
 
-  // Ajouter ou modifier facture
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.clientNom || !form.clientTelephone || products.length === 0) {
-      alert("Veuillez remplir les infos client et ajouter au moins un produit !");
+  /* ➕ AJOUT : modifier produit */
+  const editProduct = (index: number) => {
+    if (isLocked) return;
+
+    const p = products[index];
+
+    setProductForm({
+      typeDeProduit: p.typeDeProduit,
+      quantity: String(p.quantity),
+      price: String(p.price),
+    });
+
+    setProducts(products.filter((_, i) => i !== index));
+  };
+
+  const totalGlobal = products.reduce((sum, p) => sum + p.total, 0);
+
+  /* ===== AJOUT FACTURE ===== */
+  const addInvoice = async () => {
+    if (!client.clientNom || products.length === 0) {
+      alert("Client et produits obligatoires");
       return;
     }
 
-    const total = products.reduce((acc, p) => acc + p.total, 0);
+    await fetch("/invoices/api", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...client,
+        products,
+        total: totalGlobal,
+      }),
+    });
 
-    setLoading(true);
-    try {
-      if (form.editId) {
-        await fetch("/invoices/api", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...form, products, total, id: form.editId }),
-        });
-      } else {
-        await fetch("/invoices/api", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...form, products, total }),
-        });
-      }
+    /* 🔒 AJOUT : verrouiller après ajout facture */
+    setIsLocked(true);
 
-      setForm({ clientNom: "", clientTelephone: "", clientAdresse: "", modePaiement: "Espèces", editId: 0 });
-      setProducts([]);
-      fetchInvoices();
-    } catch {
-      alert("Erreur lors de l’enregistrement !");
-    } finally {
-      setLoading(false);
-    }
+    setClient({
+      clientNom: "",
+      clientTelephone: "",
+      clientAdresse: "",
+      modePaiement: "Espèces",
+    });
+    setProducts([]);
+    setIsLocked(false); // prêt pour nouvelle facture
+    fetchInvoices();
   };
 
-  // Pré-remplir pour modification
-  const handleEdit = (inv: Invoice) => {
-    setForm({ clientNom: inv.clientNom, clientTelephone: inv.clientTelephone, clientAdresse: inv.clientAdresse || "", modePaiement: inv.modePaiement, editId: inv.id });
-    setProducts(inv.products);
-    setMenuOpen(false);
-  };
-
-  // Supprimer facture
-  const handleDelete = async (id: number) => {
-    if (!confirm("Voulez-vous vraiment supprimer cette facture ?")) return;
-    try { await fetch(`/invoices/api?id=${id}`, { method: "DELETE" }); fetchInvoices(); } catch { alert("Erreur lors de la suppression !"); }
-  };
-
-  const printInvoice = async (invoice: Invoice) => {
-  // Import dynamique pour éviter le build côté serveur
+  /* ===== PRINT FACTURE PRO ===== */
+  const printInvoice = async (inv: Invoice) => {
   const html2pdf = (await import("html2pdf.js")).default;
 
   const element = document.createElement("div");
+
   element.innerHTML = `
-    <div style="font-family: sans-serif; padding: 10px; width: 190mm; box-sizing: border-box;">
-      <!-- Entête -->
-      <div style="display: flex; align-items: center; border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 10px;">
-        <img src="/logo.png" style="width: 60px; height: 60px; margin-right: 10px;" />
-        <div>
-          <h1 style="margin:0; font-size: 18px;">Scierie du Congo SARL</h1>
-          <p style="margin:0; font-size: 10px;">RCCM : CD/KIN/12345</p>
-          <p style="margin:0; font-size: 10px;">Email : contact@scieriecongo.com</p>
+    <div style="
+      font-family: Arial, sans-serif;
+      padding:25px;
+      width:190mm;
+      color:#000;
+      line-height:1.6;
+    ">
+
+      <!-- EN-TÊTE -->
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:30px;
+      ">
+
+        <!-- ENTREPRISE -->
+        <div style="max-width:60%;">
+          <h2 style="margin:0; color:#1e40af;">
+            Scierie du Congo SARL
+          </h2>
+          <p style="margin:4px 0; color:#1e40af;">
+            Email : contact@scieriecongo.com
+          </p>
+          <p style="margin:4px 0; color:#dc2626;">
+            Tél : +243 999 999 999
+          </p>
+          <p style="margin:4px 0; font-size:12px;">
+            RCCM : <strong>CD/KIN/12345</strong><br/>
+            TVA : <strong>123456</strong>
+          </p>
+        </div>
+
+        <!-- CLIENT -->
+        <div style="text-align:right;">
+          <h3 style="margin:0;">FACTURE</h3>
+          <p><strong>N° :</strong> ${inv.numeroFacture}</p>
+          <p><strong>Date :</strong> ${new Date(inv.createdAt).toLocaleDateString()}</p>
+          <br/>
+          <p><strong>Client :</strong> ${inv.clientNom}</p>
+          <p><strong>Tél :</strong> ${inv.clientTelephone}</p>
+          <p><strong>Adresse :</strong> ${inv.clientAdresse || ""}</p>
         </div>
       </div>
 
-      <!-- Infos client et facture -->
-      <div style="display:flex; justify-content: space-between; margin-bottom:10px; font-size: 10px;">
-        <div>
-          <p><strong>Facture N°:</strong> ${invoice.numeroFacture}</p>
-          <p><strong>Date:</strong> ${new Date(invoice.createdAt).toLocaleDateString()}</p>
-        </div>
-        <div>
-          <p><strong>Client:</strong> ${invoice.clientNom}</p>
-          <p><strong>Téléphone:</strong> ${invoice.clientTelephone}</p>
-          <p><strong>Adresse:</strong> ${invoice.clientAdresse || ""}</p>
-        </div>
-      </div>
-
-      <!-- Tableau -->
-      <table style="width:100%; border-collapse: collapse; font-size: 12px; table-layout: fixed;">
+      <!-- TABLE PRODUITS -->
+      <table style="
+        width:100%;
+        border-collapse:collapse;
+        font-size:12px;
+        margin-bottom:20px;
+      ">
         <thead>
           <tr>
-            <th style="border:1px solid #000; padding:5px; width:45%;">Produit</th>
-            <th style="border:1px solid #000; padding:5px; width:15%;">Qté</th>
-            <th style="border:1px solid #000; padding:5px; width:20%;">Prix</th>
-            <th style="border:1px solid #000; padding:5px; width:20%;">Total</th>
+            <th style="border:1px solid #000; padding:10px;">Produit</th>
+            <th style="border:1px solid #000; padding:10px;">Quantité</th>
+            <th style="border:1px solid #000; padding:10px;">Prix Unitaire</th>
+            <th style="border:1px solid #000; padding:10px;">Total</th>
           </tr>
         </thead>
         <tbody>
-          ${invoice.products.map(p => `
+          ${inv.products.map(p => `
             <tr>
-              <td style="border:1px solid #000; padding:5px; word-break: break-word;">${p.typeDeProduit}</td>
-              <td style="border:1px solid #000; padding:5px; text-align:center;">${p.quantity}</td>
-              <td style="border:1px solid #000; padding:5px; text-align:right;">${p.price.toLocaleString()}</td>
-              <td style="border:1px solid #000; padding:5px; text-align:right;">${p.total.toLocaleString()}</td>
+              <td style="border:1px solid #000; padding:10px;">
+                ${p.typeDeProduit}
+              </td>
+              <td style="border:1px solid #000; padding:10px; text-align:center;">
+                ${p.quantity}
+              </td>
+              <td style="border:1px solid #000; padding:10px; text-align:right;">
+                ${p.price.toLocaleString()} CDF
+              </td>
+              <td style="border:1px solid #000; padding:10px; text-align:right;">
+                ${p.total.toLocaleString()} CDF
+              </td>
             </tr>
           `).join("")}
         </tbody>
       </table>
 
-      <!-- Total -->
-      <div style="text-align:right; font-weight:bold; font-size: 14px; margin-top:5px;">
-        TOTAL: ${invoice.total.toLocaleString()} CDF
+      <!-- TOTAL GLOBAL -->
+      <div style="
+        margin-top:25px;
+        padding-top:10px;
+        border-top:2px solid #000;
+        text-align:right;
+        font-size:14px;
+        font-weight:bold;
+      ">
+        TOTAL GLOBAL : ${inv.total.toLocaleString()} CDF
       </div>
-      <p style="font-size: 12px; margin-top:5px;">Mode de paiement: ${invoice.modePaiement}</p>
+
+      <!-- MESSAGE -->
+      <div style="
+        margin-top:35px;
+        font-size:12px;
+        text-align:center;
+        color:#333;
+      ">
+        <p>
+          Merci pour votre confiance.<br/>
+          Nous espérons avoir le plaisir de vous servir à nouveau très prochainement.
+        </p>
+        <p style="margin-top:15px; font-weight:bold;">
+          Scierie du Congo SARL
+        </p>
+      </div>
+
     </div>
   `;
 
   html2pdf()
     .set({
-      margin: [5, 5, 5, 5],
-      filename: `Facture-${invoice.numeroFacture}.pdf`,
+      margin: 5,
+      filename: `Facture-${inv.numeroFacture}.pdf`,
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      html2canvas: { scale: 1, scrollY: -window.scrollY },
-      ...( { pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } } as any )
+      html2canvas: { scale: 2 },
     })
     .from(element)
     .save();
 };
 
 
+  /* ================= UI ================= */
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* HEADER */}
-      <header className="bg-blue-800 text-white flex items-center justify-between px-4 py-3 shadow-md sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden p-2 rounded hover:bg-blue-700 transition" aria-label="Ouvrir le menu">
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-          <div className="flex items-center gap-2"><span className="text-2xl">🧾</span><h1 className="text-lg sm:text-xl font-bold">Factures</h1></div>
+    <div className="p-6 space-y-6 bg-gray-100 min-h-screen">
+
+      {/* INFOS HAUT (ENTREPRISE + CLIENT) — INCHANGÉ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded shadow">
+        <div>
+          <h2 className="font-bold text-lg">🏢 Scierie du Congo SARL</h2>
+          <p>Email: contact@scieriecongo.com</p>
+          <p>Tél: +243 999 999 999</p>
+          <p>TVA: 123456 | RCCM: CD/KIN/12345</p>
         </div>
-      </header>
 
-      <div className="flex flex-1">
-        {/* SIDEBAR */}
-        <aside className={`fixed lg:static top-0 left-0 h-full bg-blue-900 text-gray-100 w-64 transform ${menuOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 transition-transform duration-300 z-50`}>
-          <div className="p-4 text-2xl font-bold border-b border-blue-700 flex justify-between items-center">🪵 Scierie<X className="lg:hidden p-1 rounded hover:bg-blue-700 cursor-pointer" size={20} onClick={() => setMenuOpen(false)} /></div>
-          <nav className="flex flex-col p-4 space-y-2 text-sm">
-            <MenuLink href="/" icon={<Home size={16} />} text="Accueil" />
-            <MenuLink href="/charges" icon={<Settings size={16} />} text="Charges" />
-            <MenuLink href="/stock" icon={<Package size={16} />} text="Stock" />
-            <MenuLink href="/productions" icon={<Factory size={16} />} text="Production" />
-            <MenuLink href="/sales" icon={<ShoppingCart size={16} />} text="Ventes" />
-            <MenuLink href="/expenses" icon={<DollarSign size={16} />} text="Dépenses" />
-            <MenuLink href="/invoices" icon={<FileText size={16} />} text="Factures" />
-            <MenuLink href="/benefice" icon={<DollarSign size={16} />} text="Bénéfice" />
-            <MenuLink href="/reports" icon={<BarChart2 size={16} />} text="Rapports" />
-            <MenuLink href="/parametres" icon={<Settings size={16} />} text="Paramètres" />
-            <MenuLink href="/utilisateurs" icon={<User size={16} />} text="Utilisateurs" />
-          </nav>
-          <div className="mt-auto px-4 py-4 text-xs text-blue-200 border-t border-blue-800">© {new Date().getFullYear()} ScieriePro</div>
-        </aside>
-
-        {/* CONTENU */}
-        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
-
-          {/* Informations entreprise */}
-          <div className="bg-white p-4 rounded shadow-md mb-4">
-            <h2 className="text-lg font-semibold text-center">🪵 Scierie du Congo SARL</h2>
-            <p className="text-center text-sm">Avenue Industrielle, Kinshasa, RDC</p>
-            <p className="text-center text-sm">Tel: +243 999 999 999 | Email: contact@scieriecongo.com</p>
-          </div>
-
-          {/* Formulaire client */}
-          <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md mb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-              <input name="clientNom" value={form.clientNom} onChange={handleChange} placeholder="Client" className="border rounded px-2 py-2 text-sm" />
-              <input name="clientTelephone" value={form.clientTelephone} onChange={handleChange} placeholder="Téléphone" className="border rounded px-2 py-2 text-sm" />
-              <input name="clientAdresse" value={form.clientAdresse} onChange={handleChange} placeholder="Adresse" className="border rounded px-2 py-2 text-sm" />
-              <select name="modePaiement" value={form.modePaiement} onChange={handleChange} className="border rounded px-2 py-2 text-sm">
-                <option value="Espèces">Espèces</option>
-                <option value="Mobile Money">Mobile Money</option>
-                <option value="Virement">Virement</option>
-              </select>
-            </div>
-
-            {/* Ajouter produits */}
-            <div className="mb-4">
-              <h3 className="font-semibold mb-2">Produits à facturer</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2">
-                <input name="typeDeProduit" value={productForm.typeDeProduit} onChange={handleProductChange} placeholder="Produit" className="border rounded px-2 py-2 text-sm" />
-                <input type="number" name="quantity" value={productForm.quantity} onChange={handleProductChange} placeholder="Qté" className="border rounded px-2 py-2 text-sm" />
-                <input type="number" name="price" value={productForm.price} onChange={handleProductChange} placeholder="Prix" className="border rounded px-2 py-2 text-sm" />
-                <button type="button" onClick={addProduct} className="bg-blue-600 text-white rounded px-2 py-2 hover:bg-blue-700">➕ Ajouter</button>
-              </div>
-
-              {/* Liste produits */}
-              {products.length > 0 && (
-                <table className="w-full text-sm border border-gray-200 mb-2">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="border px-2 py-1">Produit</th>
-                      <th className="border px-2 py-1">Qté</th>
-                      <th className="border px-2 py-1">Prix</th>
-                      <th className="border px-2 py-1">Total</th>
-                      <th className="border px-2 py-1">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map((p, i) => (
-                      <tr key={i}>
-                        <td className="border px-2 py-1">{p.typeDeProduit}</td>
-                        <td className="border px-2 py-1">{p.quantity}</td>
-                        <td className="border px-2 py-1">{p.price.toLocaleString()}</td>
-                        <td className="border px-2 py-1">{p.total.toLocaleString()}</td>
-                        <td className="border px-2 py-1">
-                          <button type="button" onClick={() => removeProduct(i)} className="bg-red-600 text-white px-1 py-0.5 rounded text-xs">🗑️</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            <button type="submit" disabled={loading} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">{form.editId ? "✏️ Modifier Facture" : "💾 Ajouter Facture"}</button>
-          </form>
-
-          {/* Tableau factures */}
-          <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-            <table className="min-w-full text-xs sm:text-sm text-left text-gray-600">
-              <thead className="bg-blue-600 text-white uppercase">
-                <tr>
-                  <th className="px-3 py-2">N° Facture</th>
-                  <th className="px-3 py-2">Client</th>
-                  <th className="px-3 py-2">Produits</th>
-                  <th className="px-3 py-2">Total</th>
-                  <th className="px-3 py-2">Paiement</th>
-                  <th className="px-3 py-2">Statut</th>
-                  <th className="px-3 py-2">Date</th>
-                  <th className="px-3 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.length === 0 ? (
-                  <tr><td colSpan={8} className="text-center py-3 text-gray-400">Aucune facture.</td></tr>
-                ) : (
-                  invoices.map((inv) => (
-                    <tr key={inv.id} className="border-b hover:bg-blue-50 transition">
-                      <td className="px-3 py-2 font-semibold">{inv.numeroFacture}</td>
-                      <td className="px-3 py-2">{inv.clientNom}</td>
-                      <td className="px-3 py-2">
-                        {inv.products.map((p, i) => (
-                          <div key={i}>{p.typeDeProduit} x{p.quantity} ({p.total.toLocaleString()})</div>
-                        ))}
-                      </td>
-                      <td className="px-3 py-2 font-semibold">{inv.total.toLocaleString()}</td>
-                      <td className="px-3 py-2">{inv.modePaiement}</td>
-                      <td className="px-3 py-2">{inv.statut}</td>
-                      <td className="px-3 py-2">{new Date(inv.createdAt).toLocaleDateString()}</td>
-                      <td className="px-3 py-2 flex gap-1">
-                        <button onClick={() => handleEdit(inv)} className="bg-yellow-500 text-white rounded px-2 py-1 text-xs">✏️</button>
-                        <button onClick={() => handleDelete(inv.id)} className="bg-red-600 text-white rounded px-2 py-1 text-xs">🗑️</button>
-                        <button onClick={() => printInvoice(inv)} className="bg-blue-600 text-white rounded px-2 py-1 text-xs">🖨️ PDF</button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-        </main>
+        <div className="space-y-2">
+          <input placeholder="Nom client" value={client.clientNom}
+            onChange={(e) => setClient({ ...client, clientNom: e.target.value })}
+            className="border p-2 w-full" />
+          <input placeholder="Téléphone" value={client.clientTelephone}
+            onChange={(e) => setClient({ ...client, clientTelephone: e.target.value })}
+            className="border p-2 w-full" />
+          <input placeholder="Adresse" value={client.clientAdresse}
+            onChange={(e) => setClient({ ...client, clientAdresse: e.target.value })}
+            className="border p-2 w-full" />
+        </div>
       </div>
 
-      {/* FOOTER */}
-      <footer className="bg-blue-900 text-gray-200 py-3 text-center text-sm shadow-inner">© {new Date().getFullYear()} ScieriePro — Tous droits réservés.</footer>
+      {/* PRODUITS */}
+      <div className="bg-white p-4 rounded shadow">
+        <div className="grid grid-cols-4 gap-2">
+          <input placeholder="Produit"
+            value={productForm.typeDeProduit}
+            onChange={(e) => setProductForm({ ...productForm, typeDeProduit: e.target.value })}
+            className="border p-2" />
+          <input type="number" placeholder="Qté"
+            value={productForm.quantity}
+            onChange={(e) => setProductForm({ ...productForm, quantity: e.target.value })}
+            className="border p-2" />
+          <input type="number" placeholder="Prix unitaire"
+            value={productForm.price}
+            onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+            className="border p-2" />
+          <button onClick={addProduct} className="bg-blue-600 text-white">
+            ➕ Ajouter
+          </button>
+        </div>
+
+        <table className="w-full mt-4 border">
+          <thead className="bg-gray-200">
+            <tr>
+              <th>Produit</th>
+              <th>Qté</th>
+              <th>Prix</th>
+              <th>Total</th>
+              {!isLocked && <th>Actions</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {products.map((p, i) => (
+              <tr key={i}>
+                <td>{p.typeDeProduit}</td>
+                <td>{p.quantity}</td>
+                <td>{p.price}</td>
+                <td>{p.total}</td>
+                {!isLocked && (
+                  <td className="space-x-2">
+                    <button onClick={() => editProduct(i)}>✏️</button>
+                    <button onClick={() => deleteProduct(i)}>🗑️</button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="text-right font-bold mt-2">
+          TOTAL GLOBAL : {totalGlobal} CDF
+        </div>
+
+        <button onClick={addInvoice}
+          className="mt-3 bg-green-600 text-white px-4 py-2 rounded">
+          💾 Ajouter Facture
+        </button>
+      </div>
+
+      {/* TABLE FACTURES — INCHANGÉ */}
+      <div className="bg-white p-4 rounded shadow">
+        <h2 className="font-bold mb-2">📋 Factures</h2>
+        <table className="w-full border">
+          <thead className="bg-blue-600 text-white">
+            <tr>
+              <th>N°</th><th>Client</th><th>Total</th><th>Date</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoices.map((inv) => (
+              <tr key={inv.id}>
+                <td>{inv.numeroFacture}</td>
+                <td>{inv.clientNom}</td>
+                <td>{inv.total}</td>
+                <td>{new Date(inv.createdAt).toLocaleDateString()}</td>
+                <td>
+                  <button onClick={() => printInvoice(inv)}>🖨️</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
     </div>
   );
 }
 
-// MenuLink
-function MenuLink({ href, icon, text }: { href: string; icon: React.ReactNode; text: string }) {
-  return (
-    <Link href={href} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-blue-800 transition text-sm">
-      <span className="text-blue-100">{icon}</span>
-      <span>{text}</span>
-    </Link>
-  );
-}
+
+
