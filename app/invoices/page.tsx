@@ -139,7 +139,7 @@ const printInvoice = async (inv: Invoice) => {
 
   element.innerHTML = `
   <div style="
-    font-family: Arial, sans-serif;
+    font-family: Helvetica, Arial, 'Roboto', 'Inter', sans-serif;
     padding:16px;
     width:180mm;
     color:#000;
@@ -148,7 +148,7 @@ const printInvoice = async (inv: Invoice) => {
     font-weight:800;
   ">
 
-    <!-- EN-TÊTE : ENTREPRISE À GAUCHE / CLIENT À DROITE -->
+    <!-- EN-TÊTE -->
     <div style="
       display:flex;
       justify-content:space-between;
@@ -186,10 +186,10 @@ const printInvoice = async (inv: Invoice) => {
 
     </div>
 
-    <!-- SÉPARATION FORTE -->
+    <!-- SÉPARATION -->
     <hr style="border:4px solid #000; margin:6px 0 10px 0;" />
 
-    <!-- TABLE PRODUITS -->
+    <!-- TABLE -->
     <table style="
       width:100%;
       border-collapse:collapse;
@@ -255,7 +255,7 @@ const printInvoice = async (inv: Invoice) => {
       filename: `Facture-${inv.numeroFacture}.pdf`,
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       html2canvas: {
-        scale: 4,              // 🔥 ULTRA NET
+        scale: 4,
         letterRendering: true,
         useCORS: true
       },
@@ -263,6 +263,7 @@ const printInvoice = async (inv: Invoice) => {
     .from(element)
     .save();
 };
+
 
   return (
     <div className="p-6 space-y-6 bg-gray-100 min-h-screen">
