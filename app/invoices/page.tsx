@@ -130,8 +130,7 @@ export default function InvoicePage() {
     setIsLocked(false); // prêt pour nouvelle facture
     fetchInvoices();
   };
-
-  /* ===== IMPRIMER FACTURE ===== */
+/* ===== IMPRIMER FACTURE ===== */
 const printInvoice = async (inv: Invoice) => {
   const html2pdf = (await import("html2pdf.js")).default;
 
@@ -139,13 +138,13 @@ const printInvoice = async (inv: Invoice) => {
 
   element.innerHTML = `
   <div style="
-    font-family: Helvetica, Arial, 'Roboto', 'Inter', sans-serif;
-    padding:16px;
+    font-family: 'Bahnschrift', Helvetica, Arial, 'Roboto', 'Inter', sans-serif;
+    padding:20px;
     width:180mm;
     color:#000;
-    line-height:1.9;
-    font-size:16px;
-    font-weight:800;
+    line-height:2.2;
+    font-size:32px;  /* Très gros texte pour tout le corps */
+    font-weight:900;
   ">
 
     <!-- EN-TÊTE -->
@@ -153,28 +152,28 @@ const printInvoice = async (inv: Invoice) => {
       display:flex;
       justify-content:space-between;
       align-items:flex-start;
-      margin-bottom:10px;
+      margin-bottom:30px;
     ">
 
-      <!-- ENTREPRISE -->
+       <!-- ENTREPRISE -->
       <div style="width:50%; text-align:left;">
-        <div style="font-size:19px; font-weight:900;">
-          SCIERIE DU CONGO SARL
+        <div style="font-size:50px; font-weight:900;">
+          SCIERIE LE CHAMPIONS
         </div>
-        <div style="margin-top:6px; font-size:15px;">
+        <div style="margin-top:12px; font-size:36px;">
           Email : contact@scieriecongo.com<br/>
-          Tél : +243 999 999 999<br/>
-          RCCM : CD/KIN/12345<br/>
+          Tél : +243 972235288<br/>
+          RCCM : ROUTE SOLIEZI COIN AV<br/>
           TVA : 123456
         </div>
       </div>
-
+      
       <!-- CLIENT -->
-      <div style="width:45%; text-align:right; font-size:15px;">
-        <div style="font-size:18px; font-weight:900;">
+      <div style="width:45%; text-align:right; font-size:28px;">
+        <div style="font-size:38px; font-weight:900;">
           FACTURE
         </div>
-        <div style="margin-top:6px;">
+        <div style="margin-top:10px;">
           <strong>N° :</strong> ${inv.numeroFacture}<br/>
           <strong>Date :</strong> ${new Date(inv.createdAt).toLocaleDateString()}<br/><br/>
 
@@ -187,35 +186,35 @@ const printInvoice = async (inv: Invoice) => {
     </div>
 
     <!-- SÉPARATION -->
-    <hr style="border:4px solid #000; margin:6px 0 10px 0;" />
+    <hr style="border:6px solid #000; margin:12px 0 25px 0;" />
 
     <!-- TABLE -->
     <table style="
       width:100%;
       border-collapse:collapse;
-      font-size:16px;
+      font-size:28px;  /* Très gros texte pour tableau */
     ">
       <thead>
         <tr>
-          <th style="border:3px solid #000; padding:8px;">Produit</th>
-          <th style="border:3px solid #000; padding:8px;">Qté</th>
-          <th style="border:3px solid #000; padding:8px;">Prix</th>
-          <th style="border:3px solid #000; padding:8px;">Total</th>
+          <th style="border:5px solid #000; padding:16px;">Produit</th>
+          <th style="border:5px solid #000; padding:16px;">Qté</th>
+          <th style="border:5px solid #000; padding:16px;">Prix</th>
+          <th style="border:5px solid #000; padding:16px;">Total</th>
         </tr>
       </thead>
       <tbody>
         ${inv.products.map(p => `
           <tr>
-            <td style="border:3px solid #000; padding:8px;">
+            <td style="border:5px solid #000; padding:16px;">
               ${p.typeDeProduit}
             </td>
-            <td style="border:3px solid #000; padding:8px; text-align:center;">
+            <td style="border:5px solid #000; padding:16px; text-align:center;">
               ${p.quantity}
             </td>
-            <td style="border:3px solid #000; padding:8px; text-align:right;">
+            <td style="border:5px solid #000; padding:16px; text-align:right;">
               ${p.price.toLocaleString()} CDF
             </td>
-            <td style="border:3px solid #000; padding:8px; text-align:right;">
+            <td style="border:5px solid #000; padding:16px; text-align:right;">
               ${p.total.toLocaleString()} CDF
             </td>
           </tr>
@@ -225,10 +224,10 @@ const printInvoice = async (inv: Invoice) => {
 
     <!-- TOTAL -->
     <div style="
-      margin-top:16px;
-      padding-top:12px;
-      border-top:4px solid #000;
-      font-size:18px;
+      margin-top:30px;
+      padding-top:20px;
+      border-top:6px solid #000;
+      font-size:36px;
       font-weight:900;
       text-align:right;
     ">
@@ -237,10 +236,10 @@ const printInvoice = async (inv: Invoice) => {
 
     <!-- MESSAGE -->
     <div style="
-      margin-top:24px;
+      margin-top:40px;
       text-align:center;
-      font-size:15px;
-      font-weight:800;
+      font-size:28px;
+      font-weight:900;
     ">
       Merci pour votre confiance.<br/>
       SCIERIE DU CONGO SARL
@@ -273,7 +272,7 @@ const printInvoice = async (inv: Invoice) => {
         <div>
           <h2 className="font-bold text-lg">🏢 Scierie du Congo SARL</h2>
           <p>Email: contact@scieriecongo.com</p>
-          <p>Tél: +243 999 999 999</p>
+          <p>Tél: +243 972235288<br/></p>
           <p>TVA: 123456 | RCCM: CD/KIN/12345</p>
         </div>
 
